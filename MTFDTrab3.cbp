@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="MTFDTrab3" />
+		<Option pch_mode="2" />
+		<Option compiler="gfortran" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/MTFDTrab3" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gfortran" />
+				<Compiler>
+					<Add option="-fimplicit-none" />
+					<Add option="-ffree-line-length-none" />
+					<Add option="-ffixed-line-length-none" />
+					<Add option="-fdefault-integer-8" />
+					<Add option="-fdefault-double-8" />
+					<Add option="-fdefault-real-8" />
+					<Add option="-ffixed-form" />
+					<Add option="-Wall" />
+					<Add option="-fcheck=bounds" />
+					<Add option="-fcheck=all" />
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/MTFDTrab3" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gfortran" />
+				<Compiler>
+					<Add option="-march=corei7" />
+					<Add option="-ffast-math" />
+					<Add option="-fexpensive-optimizations" />
+					<Add option="-O3" />
+					<Add option="-fimplicit-none" />
+					<Add option="-ffree-line-length-none" />
+					<Add option="-ffixed-line-length-none" />
+					<Add option="-fdefault-integer-8" />
+					<Add option="-fdefault-double-8" />
+					<Add option="-fdefault-real-8" />
+					<Add option="-ffixed-form" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-fimplicit-none" />
+			<Add option="-ffree-line-length-none" />
+			<Add option="-ffixed-line-length-none" />
+			<Add option="-ffixed-form" />
+			<Add option="-Wall" />
+		</Compiler>
+		<Unit filename="Coefficients.f">
+			<Option weight="2" />
+		</Unit>
+		<Unit filename="CustomDouble.f">
+			<Option weight="0" />
+		</Unit>
+		<Unit filename="Geometry.f">
+			<Option weight="1" />
+		</Unit>
+		<Unit filename="Properties.f">
+			<Option weight="1" />
+		</Unit>
+		<Unit filename="Results.f">
+			<Option weight="2" />
+		</Unit>
+		<Unit filename="Solver.f">
+			<Option weight="3" />
+		</Unit>
+		<Unit filename="Testing.f">
+			<Option weight="4" />
+		</Unit>
+		<Unit filename="main.f">
+			<Option weight="4" />
+		</Unit>
+		<Extensions>
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
