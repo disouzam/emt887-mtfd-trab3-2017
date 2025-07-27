@@ -54,14 +54,14 @@
 
         real(dp) :: k_Mushy
         real(dp) :: Tn
-        real(dp) :: fLiq
+        real(dp) :: fLiquid
         real(dp) :: kS, C
 
         ! Define the formula for liquid fraction calculation: lever rule or linear variation in mushy zone
         ! Mode = 1 > Lever rule
         ! Mode = 2 > Linear variation of liquid fraction
         integer :: mode
-        common /LiquidFraction/ mode
+        common /LiqFracCalc/ mode
 
         ! SteelChem(1): Carbon
         ! SteelChem(2): Manganese
@@ -75,18 +75,10 @@
         k_Mushy = 0.0_dp
         C = 5.0_dp
 
-        if (mode .EQ. 1) then
-          fLiq = f_Liq_Lever(Tn)
-          kS = k_Tn(Tn)
+        fLiquid = f_Liq(Tn)
+        kS = k_Tn(Tn)
 
-          k_Mushy = kS * (1.0_dp + (C - 1.0_dp) * fLiq * fLiq)
-
-        elseif (mode .EQ. 2) then
-          fLiq = f_Linear(Tn)
-          kS = k_Tn(Tn)
-
-          k_Mushy = kS * (1.0_dp + (C - 1.0_dp) * fLiq * fLiq)
-        end if
+        k_Mushy = kS * (1.0_dp + (C - 1.0_dp) * fLiquid * fLiquid)
 
       end function k_Mushy
 
@@ -201,12 +193,12 @@
         ! Mode = 1 > Lever rule
         ! Mode = 2 > Linear variation of liquid fraction
         integer :: mode
-        common /LiquidFraction/ mode
+        common /LiqFracCalc/ mode
 
         Cp_Eq = 0.0_dp
 
-        Tliq = Tliquidus
-        Tsol = Tsolidus
+        Tliq = Tliquidus()
+        Tsol = Tsolidus()
 
         if ((Tn .LE. Tliq) .AND. (Tn .GE. Tsol)) then
 
@@ -330,8 +322,8 @@
         real(dp) :: df_dTLever
         real(dp) :: Tn, Tliq, Tsol, k, d
 
-        Tliq = Tliquidus
-        Tsol = Tsolidus
+        Tliq = Tliquidus()
+        Tsol = Tsolidus()
         k = (Tmelt - Tliq) / (Tmelt - Tsol)
 
         d = Tmelt - Tliq
@@ -529,4 +521,28 @@
         LatentHeat = 283000.0_dp
 
       end function LatentHeat
+
+
+      function f_Liq(Tn)
+        implicit none
+
+        real(dp) :: f_Liq
+        real(dp) :: Tn
+
+        ! Define the formula for liquid fraction calculation: lever rule or linear variation in mushy zone
+        ! Mode = 1 > Lever rule
+        ! Mode = 2 > Linear variation of liquid fraction
+        integer :: mode
+        common /LiqFracCalc/ mode
+
+        f_Liq = 0.0_dp
+
+        if (mode .EQ. 1) then
+          f_Liq = f_Liq_Lever(Tn)
+        elseif (mode .EQ. 2) then
+          f_Liq = f_Linear(Tn)
+        end if
+
+      end function
+
       end module Properties

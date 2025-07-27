@@ -63,7 +63,7 @@
 
         character(LEN=50) :: section
 
-        real(dp) :: dummy, maxDumm
+        real(dp) :: dummy, maxDumm, maxCp
 
         Nx = N(1)
         Ny = N(2)
@@ -75,6 +75,7 @@
         dens = 7000.0_dp
 
         maxDumm = 1.0E50_dp
+        maxCp = 0.0_dp
 
 *        if (debugmode .EQV. .TRUE.) then
 *          print*,"Density = ", dens
@@ -129,11 +130,12 @@
             ! read*
           end if
 
-*          Cp_Old = Cp_Eq(Told(I,J))
-          Cp_Old = Cp_Eq(Tnew(I,J))
+          Cp_Old = Cp_Eq(Told(I,J))
+*          Cp_Old = Cp_Eq(Tnew(I,J))
           Ap0 = (dens * Cp_Old * Delta(I,J,1) * Delta(I,J,2)) / Delta_t
 
           Cp_New = Cp_Eq(Tnew(I,J))
+          !if (Cp_New .GT. maxCp) maxCp = Cp_New
           Ap1 = (dens * Cp_New * Delta(I,J,1) * Delta(I,J,2)) / Delta_t
 
           Ap(I,J) = Aw(I,J) + Ae(I,J) + An(I,J) + As(I,J) + Ap1
@@ -194,11 +196,12 @@
             ! read*
           end if
 
-*          Cp_Old = Cp_Eq(Told(I,J))
-          Cp_Old = Cp_Eq(Tnew(I,J))
+          Cp_Old = Cp_Eq(Told(I,J))
+*          Cp_Old = Cp_Eq(Tnew(I,J))
           Ap0 = (dens * Cp_Old * Delta(I,J,1) * Delta(I,J,2)) / Delta_t
 
           Cp_New = Cp_Eq(Tnew(I,J))
+          !if (Cp_New .GT. maxCp) maxCp = Cp_New
           Ap1 = (dens * Cp_New * Delta(I,J,1) * Delta(I,J,2)) / Delta_t
 
           if (curTime .GT. tMould) then
@@ -271,11 +274,12 @@
             ! read*
           end if
 
-*          Cp_Old = Cp_Eq(Told(I,J))
-          Cp_Old = Cp_Eq(Tnew(I,J))
+          Cp_Old = Cp_Eq(Told(I,J))
+*          Cp_Old = Cp_Eq(Tnew(I,J))
           Ap0 = (dens * Cp_Old * Delta(I,J,1) * Delta(I,J,2)) / Delta_t
 
           Cp_New = Cp_Eq(Tnew(I,J))
+          !if (Cp_New .GT. maxCp) maxCp = Cp_New
           Ap1 = (dens * Cp_New * Delta(I,J,1) * Delta(I,J,2)) / Delta_t
 
           Ap(I,J) = Aw(I,J) + Ae(I,J) + An(I,J) + As(I,J) + Ap1
@@ -335,11 +339,12 @@
 
           An(I,J) = 0.0_dp
 
-*          Cp_Old = Cp_Eq(Told(I,J))
-          Cp_Old = Cp_Eq(Tnew(I,J))
+          Cp_Old = Cp_Eq(Told(I,J))
+*          Cp_Old = Cp_Eq(Tnew(I,J))
           Ap0 = (dens * Cp_Old * Delta(I,J,1) * Delta(I,J,2)) / Delta_t
 
           Cp_New = Cp_Eq(Tnew(I,J))
+          !if (Cp_New .GT. maxCp) maxCp = Cp_New
           Ap1 = (dens * Cp_New * Delta(I,J,1) * Delta(I,J,2)) / Delta_t
 
           if (curTime .GT. tMould) then
@@ -398,11 +403,12 @@
 
           An(I,J) = 0.0_dp
 
-*          Cp_Old = Cp_Eq(Told(I,J))
-          Cp_Old = Cp_Eq(Tnew(I,J))
+          Cp_Old = Cp_Eq(Told(I,J))
+*          Cp_Old = Cp_Eq(Tnew(I,J))
           Ap0 = (dens * Cp_Old * Delta(I,J,1) * Delta(I,J,2)) / Delta_t
 
           Cp_New = Cp_Eq(Tnew(I,J))
+          !if (Cp_New .GT. maxCp) maxCp = Cp_New
           Ap1 = (dens * Cp_New * Delta(I,J,1) * Delta(I,J,2)) / Delta_t
 
           if (curTime .GT. tMould) then
@@ -459,11 +465,12 @@
           Ae(I,J) = 0.0_dp
           An(I,J) = 0.0_dp
 
-*          Cp_Old = Cp_Eq(Told(I,J))
-          Cp_Old = Cp_Eq(Tnew(I,J))
+          Cp_Old = Cp_Eq(Told(I,J))
+*          Cp_Old = Cp_Eq(Tnew(I,J))
           Ap0 = (dens * Cp_Old * Delta(I,J,1) * Delta(I,J,2)) / Delta_t
 
           Cp_New = Cp_Eq(Tnew(I,J))
+          !if (Cp_New .GT. maxCp) maxCp = Cp_New
           Ap1 = (dens * Cp_New * Delta(I,J,1) * Delta(I,J,2)) / Delta_t
 
           if (curTime .GT. tMould) then
@@ -526,11 +533,12 @@
             ! read*
           end if
 
-*          Cp_Old = Cp_Eq(Told(I,J))
-          Cp_Old = Cp_Eq(Tnew(I,J))
+          Cp_Old = Cp_Eq(Told(I,J))
+*          Cp_Old = Cp_Eq(Tnew(I,J))
           Ap0 = (dens * Cp_Old * Delta(I,J,1) * Delta(I,J,2)) / Delta_t
 
           Cp_New = Cp_Eq(Tnew(I,J))
+          !if (Cp_New .GT. maxCp) maxCp = Cp_New
           Ap1 = (dens * Cp_New * Delta(I,J,1) * Delta(I,J,2)) / Delta_t
 
           Ap(I,J) = Aw(I,J) + Ae(I,J) + An(I,J) + As(I,J) + Ap1
@@ -579,11 +587,12 @@
 
           Ae(I,J) = 0.0_dp
 
-*          Cp_Old = Cp_Eq(Told(I,J))
-          Cp_Old = Cp_Eq(Tnew(I,J))
+          Cp_Old = Cp_Eq(Told(I,J))
+*          Cp_Old = Cp_Eq(Tnew(I,J))
           Ap0 = (dens * Cp_Old * Delta(I,J,1) * Delta(I,J,2)) / Delta_t
 
           Cp_New = Cp_Eq(Tnew(I,J))
+          !if (Cp_New .GT. maxCp) maxCp = Cp_New
           Ap1 = (dens * Cp_New * Delta(I,J,1) * Delta(I,J,2)) / Delta_t
 
           if (curTime .GT. tMould) then
@@ -664,11 +673,12 @@
               ! read*
             end if
 
-*           Cp_Old = Cp_Eq(Told(I,J))
-            Cp_Old = Cp_Eq(Tnew(I,J))
+          Cp_Old = Cp_Eq(Told(I,J))
+*          Cp_Old = Cp_Eq(Tnew(I,J))
             Ap0 = (dens * Cp_Old * Delta(I,J,1) * Delta(I,J,2)) / Delta_t
 
             Cp_New = Cp_Eq(Tnew(I,J))
+            !if (Cp_New .GT. maxCp) maxCp = Cp_New
             Ap1 = (dens * Cp_New * Delta(I,J,1) * Delta(I,J,2)) / Delta_t
 
             Ap(I,J) = Aw(I,J) + Ae(I,J) + An(I,J) + As(I,J) + Ap1
@@ -684,6 +694,8 @@
           end do
         end do
 
+*107     format(' ', A, 1F12.6)
+*        print 107,"MaxCp =           ", maxCp
 
       end subroutine coeff2D
 

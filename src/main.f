@@ -68,7 +68,8 @@
         common /tempRes/ Tnew, Told
 
         real(dp) :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
-        common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg
+        integer :: Imin,Jmin
+        common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg,Imin,Jmin
 
 *       First index: 9 nodes x 9 nodes = 81 selected positions to be saved
 *       Second index: up to 50000 time steps
@@ -114,9 +115,9 @@
         ! Mode = 1 > Lever rule
         ! Mode = 2 > Linear variation of liquid fraction
         integer :: mode
-        common /LiquidFraction/ mode
+        common /LiqFracCalc/ mode
 
-        mode = 1
+        mode = 2
 
         SteelChem(1) = 0.08_dp
         SteelChem(2) = 0.42_dp
@@ -405,7 +406,7 @@
           read*, CasSpd
           CasSpd = CasSpd / 60.0_dp
         else
-          CasSpd = 1.4_dp / 60.0_dp
+          CasSpd = 1.0_dp / 60.0_dp
         end if
 
         print*,""
@@ -487,6 +488,10 @@
         logical :: debugmode
         common /dbgMode/ debugmode
 
+        real(dp) :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
+        integer :: Imin,Jmin
+        common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg,Imin,Jmin
+
 *       N: number of nodes in each direction
 *          1,2 indices refer to x and y respectively
         integer :: N(1:2)
@@ -502,7 +507,7 @@
         print*,"---------------------------------------------------------------"
 
         if (debugmode .EQV. .TRUE.) then
-          dummy = 1810.0_dp
+          dummy = 1800.07_dp
           print*,"Initial liquid steel temperature = ", dummy, " K"
         else
           read*, dummy
@@ -518,6 +523,8 @@
         Told(N(1)+1,:) = 0.0_dp
         Told(:,N(2)+1) = 0.0_dp
 
+        Imin = 0
+        Jmin = 0
         call calcOldStats()
 
       end subroutine readInitTemp
@@ -673,7 +680,7 @@
             if (debugmode .EQV. .FALSE.) then
               read*, timeStep
             else
-              timeStep = 0.01_dp
+              timeStep = 0.0001_dp
             end if
 
             num_steps = ceiling(simTime / timeStep)
@@ -705,7 +712,7 @@
         if (debugmode .EQV. .FALSE.) then
           read*, TStepSavingPeriod
         else
-          TStepSavingPeriod = 100
+          TStepSavingPeriod = 10000
         end if
 
         print*
@@ -744,7 +751,7 @@
         print*,"Type 3 to choose TDMA (tri-diagonal matrix algorithm)"
         print*
         if (debugmode .EQV. .TRUE.) then
-          meth = 3
+          meth = 2
           print*,"meth = ", meth
         else
           read*, meth
@@ -791,7 +798,7 @@
         print*,"---------------------------------------------"
         print*,"Range: 1.0D-1 - 1.0D-8"
         if (debugmode .EQV. .TRUE.) then
-          tol = 1.0E-3_dp
+          tol = 0.1_dp
           print*,"tol = ", tol
         else
           read*, tol
@@ -814,7 +821,7 @@
 
 
         if (debugmode .EQV. .TRUE.) then
-          alpha = 0.25_dp
+          alpha = 1.0_dp
 
           if (alpha .EQ. 1.0_dp) then
             print*,"---------------------------------------------"
@@ -858,6 +865,12 @@
 
         integer :: iter, curTimeStep, totalIter
         common /control/ iter, curTimeStep, totalIter
+
+        real(dp) :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
+        integer :: Imin,Jmin
+        common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg,Imin,Jmin
+
+        integer :: Nchange
 
         integer :: tsShLog
         common /convergence/ tsShLog
@@ -914,6 +927,7 @@
 160     format(' ', A, I6)
 170     format(' ', A, F12.4, A)
 
+        Nchange = 0
         Delta_t = 0
 
         if (timeChoice .EQ. 1) then
@@ -937,8 +951,6 @@
 
         do while (curTime .LE. endTime)
 
-          if ((totalIter - tsShLog) .LT. 100) then
-
             print*
             print*
             print*
@@ -951,8 +963,6 @@
             print*
             print*,"--------------------------------------------------------------------------------------------------"
 
-         end if
-
 *         Jacobi method
           if (meth .EQ. 1) then
             name = "Jacobi Method"
@@ -960,7 +970,7 @@
             if (debugmode .EQV. .TRUE.) then
 *              call print_res2D(name,Tnew,Np,curTime)
             end if
-            if ((totalIter - tsShLog) .LT. 100) then
+            if ((totalIter - tsShLog) .LT. 50) then
                 print 160,"Jacobi method has terminated - Iterations: ", iter
                 print*,"#################################################################################################"
             end if
@@ -977,7 +987,7 @@
 *              call print_res2D(name,Tnew,Np,curTime)
             end if
 
-            if ((totalIter - tsShLog) .LT. 100) then
+            if ((totalIter - tsShLog) .LT. 50) then
                 print 160,"Gauss-Seidel method has terminated - Iterations: ", iter
                 print*,"#################################################################################################"
             end if
@@ -995,7 +1005,7 @@
 *                call print_res2D(name,Tnew,Np,curTime)
               end if
 
-              if ((totalIter - tsShLog) .LT. 100) then
+              if ((totalIter - tsShLog) .LT. 50) then
                 print 160,"TDMA method with ADI has terminated - Iterations: ", iter
                 print*,"#################################################################################################"
               end if
@@ -1009,7 +1019,7 @@
 *                call print_res2D(name,Tnew,Np,curTime)
               end if
 
-              if ((totalIter - tsShLog) .LT. 100) then
+              if ((totalIter - tsShLog) .LT. 50) then
                 print 160,"TDMA method without ADI has terminated - Iterations: ", iter
                 print*,"#################################################################################################"
               end if
@@ -1037,7 +1047,7 @@
           if (mod(curtimeStep, TStepSavingPeriod) .EQ. 0) then
             call SaveResults(totalIter)
             call storeTimeSteps(curTime)
-          elseif (curTime .EQ. nextEndTime) then
+          elseif ((nextEndTime - curTime) .LT. 1E-6_dp) then
             call SaveResults(totalIter)
             call storeTimeSteps(curTime)
           end if
@@ -1053,6 +1063,30 @@
             end if
           else
             Delta_t = timeStep
+          end if
+
+          if ((Nchange .EQ. 0) .AND. (timeStep .GT. 0.02))then
+            if (((Tmin - Tliquidus()) .LT. 2.0_dp) .AND. (Tmin .GT. Tsolidus())) then
+              timeStep = timeStep / 100.0_dp
+              print*,timeStep
+              TStepSavingPeriod = TStepSavingPeriod * 100
+              print*,TStepSavingPeriod
+              Delta_t = timeStep
+              print*,Delta_t
+              Nchange = 1
+            end if
+          end if
+
+          if ((Nchange .EQ. 1) .AND. (timeStep .GT. 0.02)) then
+            if (((Tmin - Tsolidus()) .LT. 2.0_dp) .AND. (Tmin .GT. Tsolidus())) then
+              timeStep = timeStep * 100.0_dp
+              print*,timeStep
+              TStepSavingPeriod = TStepSavingPeriod / 100
+              print*,TStepSavingPeriod
+              Delta_t = timeStep
+              print*,Delta_t
+              Nchange = 2
+            end if
           end if
 
           curTime = curTime + Delta_t
@@ -1094,6 +1128,12 @@
         integer :: N(1:2)
         common /gridsize/ N
 
+        ! Define the formula for liquid fraction calculation: lever rule or linear variation in mushy zone
+        ! Mode = 1 > Lever rule
+        ! Mode = 2 > Linear variation of liquid fraction
+        integer :: mode
+        common /LiqFracCalc/ mode
+
         integer :: I, J
 
 *       Np: array containing node positions in X and Y axis (to be calculated)
@@ -1123,19 +1163,14 @@
         common /tempRes/ Tnew, Told
 
         real(dp) :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
-        common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg
+        integer :: Imin,Jmin
+        common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg,Imin,Jmin
 
         real(dp) :: TmaxCh, TminCh, TavgCh
 
         real(dp) :: simTime, curTime, num_steps, timeStep
         integer :: timeChoice, TStepSavingPeriod
         common /time/ simTime, curTime, num_steps, timeStep, TStepSavingPeriod, timeChoice
-
-        ! Define the formula for liquid fraction calculation: lever rule or linear variation in mushy zone
-        ! Mode = 1 > Lever rule
-        ! Mode = 2 > Linear variation of liquid fraction
-        integer :: mode
-        common /LiquidFraction/ mode
 
         real(dp) :: liqFrac
 
@@ -1158,8 +1193,8 @@
         print*,"Saving results for this time step in a text file..."
 
 *       Writing results in RESULT.DAT file, stored in the same folder as the program
-100     format(' ', 2I12,5F12.4,1F15.4)
-200     format(' ', 7A12,1A15)
+100     format(' ', 2I5,2F10.4,1F12.4,1F19.4,1F17.4,1F17.4)
+200     format(' ', 2A5,2A10,1A12,1A19,1A17,1A17)
 300     format(' ', A, F12.4)
 400     format(' ', A, I12)
 500     format(' ', A, I3, A, I3, A)
@@ -1230,7 +1265,6 @@
         write(10,*)" "
         write(10,*)" "
         write(10,*)" "
-
         write(10,*)"===================================================================================="
         write(10,*)"                             Solver:                                      "
         if (meth .EQ. 1) then
@@ -1257,6 +1291,11 @@
 
         write(10,300)"Tolerance: ", tol
         write(10,*)""
+        if (mode .EQ. 1) then
+          write(10,*)"Lever rule was used to calculate liquid fraction."
+        elseif (mode .EQ. 2) then
+          write(10,*)"A linear relationship was used to calculate liquid fraction."
+        end if
         write(10,*)"===================================================================================="
 
         write(10,*)" "
@@ -1275,41 +1314,19 @@
         write(10,600)"Maximum Temperature :                          ", Tmax, " K - Change from last time step: ", TmaxCh ," K"
         write(10,600)"Minimum Temperature :                          ", Tmin, " K - Change from last time step: ", TminCh ," K"
         write(10,600)"Average(algebraic, non-weigthed) Temperature : ", Tavg, " K - Change from last time step: ", TavgCh ," K"
+        write(10,800)"Liquidus Temperature:                          ", Tliquidus(), " K"
+        write(10,800)"Solidus Temperature:                           ", Tsolidus(), " K"
         write(10,*)"==========================================================================================================="
 
-        write(10,200)"I","J","X(m)","Y(m)","T(K)","Cp(J/kg.K)", "K(W/sq-m.K)","Liquid Fraction"
+        write(10,200)"I","J","X(m)","Y(m)","T(K)","Cp_Equiv(J/kg.K)", "K(W/sq-m.K)","Liquid_Fraction"
 
         write(10,*)"==========================================================================================================="
 
         do I = 1, N(1), 1
           do J = 1, N(2), 1
-            Cp = Cp_T(Tnew(I,J))
+            Cp = Cp_Eq(Tnew(I,J))
             k = k_Mushy(Tnew(I,J))
-            if (mode .EQ. 1) then
-              liqFrac = f_Liq_Lever(Tnew(I,J))
-            else
-              liqFrac = f_Linear(Tnew(I,J))
-            end if
-
-*            if (liqFrac .LT. 0.99_dp) then
-*                if (debugmode .EQV. .TRUE.) then
-*
-*                  print*
-*                  print*
-*                  print*
-*                  print*,"================================="
-*                  print*,"liqFrac = ", liqFrac
-*                  print*,"T = ", Tnew(I,J)
-*                  print*,"I = ", I
-*                  print*,"I = ", I
-*                  print*,"================================="
-*                  print*
-*                  print*
-*                  print*
-*
-*                end if
-*            end if
-
+            liqFrac = f_Liq(Tnew(I,J))
             write(10,100)I,J,Np(I,J,1),Np(I,J,2),Tnew(I,J),Cp,k,liqFrac
           end do
         end do
@@ -1324,8 +1341,9 @@
 
 
       subroutine storeTimeSteps(curTime)
-        use Properties
         use CustomDouble
+        use Solver
+
         implicit none
 
         real(dp) :: curTime
@@ -1356,9 +1374,9 @@
         ! Mode = 1 > Lever rule
         ! Mode = 2 > Linear variation of liquid fraction
         integer :: mode
-        common /LiquidFraction/ mode
+        common /LiqFracCalc/ mode
 
-        real(dp) :: liqFrac
+        real(dp) :: liqFrac, ShTh
 
 *       N: number of nodes in each direction
 *          1,2 indices refer to x and y respectively
@@ -1388,6 +1406,9 @@
 
         do I = 1, maxX, 1
           do J = 1, maxY, 1
+
+            ShTh = ShellThick(Xi(I),1)
+            ShTh = ShellThick(Yi(J),2)
 
             TmRs(Npos,tsSavPos,1) = curTime
             TmRs(Npos,tsSavPos,2) = Np(Xi(I),Yi(J),1)
@@ -1523,7 +1544,7 @@
 *          2: X position
 *          3: Y position
 *          4: Temperature
-*          5: Specific heat
+*          5: Specific equivalent heat
 *          6: Thermal conductivity
 *          7: Liquid fraction
         real(dp) :: TmRs(1:81,0:50000,1:7)

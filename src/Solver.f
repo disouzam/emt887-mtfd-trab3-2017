@@ -6,6 +6,7 @@
 
       module Solver
         use Coefficients
+        use CustomDouble
         use Properties
         use Results
 
@@ -15,11 +16,12 @@
 
 *     Jacobi algorithm
       subroutine Jacobi(Delta_t,tol,alpha)
-        use CustomDouble
         implicit none
 
         integer :: N(1:2)
         common /gridsize/ N
+
+        real(dp) :: maxDeltaT
 
         real(dp) :: tol, total, alpha, resid
 
@@ -35,7 +37,8 @@
         common /tempres/ Tnew, Told
 
         real(dp) :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
-        common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg
+        integer :: Imin,Jmin
+        common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg,Imin,Jmin
 
         real(dp) :: Del(1:999,1:999,1:2), Delta(1:999,1:999,1:2)
         common /mesh/ Del, Delta
@@ -68,8 +71,8 @@
         ToldAvg = Tavg
 
 *       Setting temperature to initial temperatures, stored in Told
-        TitV = Told
-        Tnew = Told
+        TitV(:,:) = Told(:,:)
+        Tnew(:,:) = Told(:,:)
 
 *       Implementation of Jacobi Algorithm
         resid = 100.0_dp
@@ -90,22 +93,28 @@
 
               Tnew(I,J) = TitV(I,J) + alpha * (total / Ap(I,J) - TitV(I,J))
 
+              maxDeltaT = abs(TitV(I,J) - Tnew(I,J))
+
+              if((abs(TitV(I,J) - Tnew(I,J))) .GT. maxDeltaT) then
+                maxDeltaT = abs(TitV(I,J) - Tnew(I,J))
+              end if
+
             end do
           end do
 
 *         Monitoring convergence
           resid = calcResid(Aw,Ae,An,As,Ap,b)
-          TitV = Tnew
+          TitV(:,:) = Tnew(:,:)
           iter = iter + 1
           totalIter = totalIter + 1
           last = .FALSE.
-          call convMonitor(name,resid,iter,totalIter,tol,last,Delta_t)
+          call convMonitor(name,resid,tol,maxDeltaT,last,Delta_t)
 
         end do
 
         last = .TRUE.
-        call convMonitor(name,resid,iter,totalIter,tol,last,Delta_t)
-        Told = Tnew
+        call convMonitor(name,resid,tol,maxDeltaT,last,Delta_t)
+        Told(:,:) = Tnew(:,:)
 
       end subroutine Jacobi
 
@@ -120,6 +129,8 @@
         logical :: debugmode
         common /dbgMode/ debugmode
 
+        real(dp) :: maxDeltaT
+
         integer :: iter, curTimeStep, totalIter
         common /control/ iter, curTimeStep, totalIter
 
@@ -128,7 +139,8 @@
         common /tempres/ Tnew, Told
 
         real(dp) :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
-        common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg
+        integer :: Imin,Jmin
+        common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg,Imin,Jmin
 
         real(dp) :: Del(1:999,1:999,1:2), Delta(1:999,1:999,1:2)
         common /mesh/ Del, Delta
@@ -167,8 +179,8 @@
         ToldAvg = Tavg
 
 *       Setting temperature to initial temperatures, stored in Told
-        TitV = Told
-        Tnew = Told
+        TitV(:,:) = Told(:,:)
+        Tnew(:,:) = Told(:,:)
 
 *       Implementation of Gauss-Seidel Algorithm (properly)
         resid = 100.0_dp
@@ -177,6 +189,9 @@
 
 *         Calculate coefficients for a 2D problem
           call coeff2D(Aw,Ae,An,As,Ap,b,Delta_t)
+
+          maxDeltaT = 0.0_dp
+          print*, resid
 
 *         Solving linear system
           do I = 1, Nx , 1
@@ -194,22 +209,25 @@
                 Tnew(I,J) = total / Ap(I,J)
               end if
 
+              if((abs(temp - Tnew(I,J))) .GT. maxDeltaT) then
+                maxDeltaT = abs(temp - Tnew(I,J))
+              end if
+
             end do
           end do
 
 *         Monitoring convergence
           resid = calcResid(Aw,Ae,An,As,Ap,b)
-          TitV = Tnew
+          TitV(:,:) = Tnew(:,:)
           iter = iter + 1
           totalIter = totalIter + 1
           last = .FALSE.
-          call convMonitor(name,resid,iter,totalIter,tol,last,Delta_t)
-
+          call convMonitor(name,resid,tol,maxDeltaT,last,Delta_t)
         end do
 
         last = .TRUE.
-        call convMonitor(name,resid,iter,totalIter,tol,last,Delta_t)
-        Told = Tnew
+        call convMonitor(name,resid,tol,maxDeltaT,last,Delta_t)
+        Told(:,:) = Tnew(:,:)
 
       end subroutine GaSe2D
 
@@ -242,7 +260,10 @@
         common /tempres/ Tnew, Told
 
         real(dp) :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
-        common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg
+        integer :: Imin,Jmin
+        common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg,Imin,Jmin
+
+        real(dp) :: maxDeltaT
 
         real(dp) :: Tw, Te, Ts, Tn
 
@@ -261,6 +282,8 @@
         character(LEN=50) :: name
         name = "TDMA 2D (without ADI)"
 
+        maxDeltaT = 0.0_dp
+
 *       Boundary conditions
         Nx = N(1)
         Ny = N(2)
@@ -275,12 +298,12 @@
         ToldAvg = Tavg
 
 *       Setting temperature to initial temperatures, stored in Told
-        TitV = Told
-        Tnew = Told
+        TitV(:,:) = Told(:,:)
+        Tnew(:,:) = Told(:,:)
 
         iter = 0
         temp = 1
-        resid= 100.0_dp
+        resid= 1.0E5_dp
         do while (resid .GT. tol)
 
 *         Calculate coefficients for a 2D problem
@@ -337,28 +360,42 @@
 *           Calculate Tnew for the last unknown node
             temp = Tnew(Nx,J)
             Tnew(Nx,J) = temp + alpha *(Q(Nx) - temp)
+            maxDeltaT = abs(temp - Tnew(Nx,J))
 
 
             do I = Nx - 1, 1, -1
               temp = Tnew(I,J)
               Tnew(I,J) = temp + alpha * (P(I) * Tnew(I+1,J) + Q(I) - temp)
+
+              if((abs(temp - Tnew(I,J))) .GT. maxDeltaT) then
+                maxDeltaT = abs(temp - Tnew(I,J))
+              end if
             end do
           end do
 
 
 *         Monitoring convergence
           resid = calcResid(Aw,Ae,An,As,Ap,b)
-          TitV = Tnew
+          TitV(:,:) = Tnew(:,:)
           iter = iter + 1
           totalIter = totalIter + 1
           last = .FALSE.
-          call convMonitor(name,resid,iter,totalIter,tol,last,Delta_t)
+          call convMonitor(name,resid,tol,maxDeltaT,last,Delta_t)
+
+*107     format(' ', A, 1F12.6)
+*207     format(' ', A, 1E12.6)
+*
+*          print 107,"TDMA - Resid:     ", resid
+*          print 107,"TDMA - Tol:       ", tol
+*          print 207,"TDMA - maxDeltaT: ", maxDeltaT
+*          print*
+*          print*
 
         end do
 
         last = .TRUE.
-        call convMonitor(name,resid,iter,totalIter,tol,last,Delta_t)
-        Told = Tnew
+        call convMonitor(name,resid,tol,maxDeltaT,last,Delta_t)
+        Told(:,:) = Tnew(:,:)
 
       end subroutine TDMA2D
 
@@ -372,6 +409,8 @@
 
         logical :: debugmode
         common /dbgMode/ debugmode
+
+        real(dp) :: maxDeltaT
 
         integer :: iter, curTimeStep, totalIter
         common /control/ iter, curTimeStep, totalIter
@@ -391,7 +430,8 @@
         common /tempres/ Tnew, Told
 
         real(dp) :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
-        common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg
+        integer :: Imin,Jmin
+        common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg,Imin,Jmin
 
         real(dp) :: Tw, Te, Ts, Tn
 
@@ -425,8 +465,8 @@
         ToldAvg = Tavg
 
 *       Setting temperature to initial temperatures, stored in Told
-        TitV = Told
-        Tnew = Told
+        TitV(:,:) = Told(:,:)
+        Tnew(:,:) = Told(:,:)
 
         iter = 0
         temp = 1
@@ -672,10 +712,16 @@
 *             Calculate Tnew for the last unknown node
               temp = Tnew(I,Ny)
               Tnew(I,Ny) = temp + alpha * (Q(Ny) - temp)
+              maxDeltaT = abs(temp - Tnew(I,J))
+
 
               do J = Ny - 1, 1, -1
                 temp = Tnew(I,J)
                 Tnew(I,J) = temp + alpha*(P(J) * Tnew(I,J+1) + Q(J) - temp)
+
+                if((abs(temp - Tnew(I,J))) .GT. maxDeltaT) then
+                  maxDeltaT = abs(temp - Tnew(I,J))
+                end if
               end do
 
             end do
@@ -684,17 +730,17 @@
 
 *         Monitoring convergence
           resid = calcResid(Aw,Ae,An,As,Ap,b)
-          TitV = Tnew
+          TitV(:,:) = Tnew(:,:)
           iter = iter + 1
           totalIter = totalIter + 1
           last = .FALSE.
-          call convMonitor(name,resid,iter,totalIter,tol,last,Delta_t)
+          call convMonitor(name,resid,tol,maxDeltaT,last,Delta_t)
 
         end do
 
         last = .TRUE.
-        call convMonitor(name,resid,iter,totalIter,tol,last,Delta_t)
-        Told = Tnew
+        call convMonitor(name,resid,tol,maxDeltaT,last,Delta_t)
+        Told(:,:) = Tnew(:,:)
 
       end subroutine TDMA2dADI
 
@@ -731,7 +777,11 @@
         common /tempres/ Tnew, Told
 
         real(dp) :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
-        common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg
+        integer :: Imin,Jmin
+        common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg,Imin,Jmin
+
+        integer :: Idummy, Jdummy
+
 
         real(dp) :: sumT
 
@@ -747,15 +797,10 @@
 
         Tliq = Tliquidus()
 
-        if (debugmode . EQV. .TRUE.) then
-*          print*
-*          print*
-*          print*
-*          print*," Starting Calculation of residues"
-*          print*
-*          print*
-*          print*
-        end if
+        Idummy = Imin
+        Jdummy = Jmin
+
+*        print*,"T(", Imin,",",Jmin,")=", Tmin, " na entrada (calcResid)."
 
         sumT = 0.0_dp
         resid = 0.0_dp
@@ -777,29 +822,24 @@
 
             if ((Tmin - Tnew(I,J)) .GT. 1.0E-8_dp) then
               Tmin = Tnew(I,J)
+              Imin = I
+              Jmin = J
             end if
 
             resid = resid + (Ap(I,J) * Tnew(I,J) - total)*(Ap(I,J) * Tnew(I,J) - total)
           end do
         end do
 
+*        print*,"T(", Idummy,",",Jdummy,")=", Tnew(Idummy,Jdummy), " na saida (calcResid)."
+*        print*
+*        print*
+
         resid = sqrt(resid) / (Nx * Ny)
+
+*        print*,"Resid = ", resid
         calcResid = resid
 
         Tavg = sumT / (Nx * Ny)
-
-        if (debugmode .EQV. .TRUE.) then
-
-          if ((Tmin - Tliq) .LT. 1.0_dp) then
-*            print 103,"#########################    T maximum: ", Tmax, "     ##################################"
-*            print 103,"#########################    T average: ", Tavg, "     ##################################"
-*            print 103,"#########################    T minimum: ", Tmin, "     ##################################"
-*            print*,"Minimum Temperature near Liquidus"
-*            print 103,"T liquidus: ", Tliquidus(), " K"
-            ! read*
-          end if
-
-        end if
 
       end function calcResid
 
@@ -807,17 +847,22 @@
 
 
 
-      subroutine convMonitor(name,resid,iter,totalIter,tol,last,tstep)
+      subroutine convMonitor(name,resid,tol,maxDeltaT,last,tstep)
         use CustomDouble
         implicit none
 
         character(LEN=50) :: name
         real(dp) :: resid, tol,tstep
-        integer :: iter, totalIter
         logical :: last
 
+        real(dp) :: maxDeltaT
+
+        integer :: iter, curTimeStep, totalIter
+        common /control/ iter, curTimeStep, totalIter
+
         real(dp) :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
-        common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg
+        integer :: Imin,Jmin
+        common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg,Imin,Jmin
 
         real(dp) :: TmaxCh, TminCh, TavgCh
 
@@ -838,8 +883,11 @@
         TavgCh = Tavg - ToldAvg
 
 *       Monitoring convergence
-        if ((mod(iter,10000) .EQ. 0) .AND. (last .EQV. .FALSE.)) then
+        if ((mod(iter,1000) .EQ. 0) .AND. (last .EQV. .FALSE.)) then
+          print*
           print*,"=================================================================================================="
+          print*,"Intermediary Step"
+          print*,"--------------------------------------------------------------------------------------------------"
           print 430,"CURRENT TIME STEP:         ", tstep, " seconds."
           print*
           print 430,"CURRENT TIME:              ", curTime, " seconds."
@@ -848,8 +896,9 @@
           print 130,"CONVERGENCE Monitor: Iterations = ", iter
           print 130,"Total iterations:                 ", totalIter
           print*,""
-          print 330,"Root-Mean Square Residue = ", resid
-          print 330,"Tolerance:                 ", tol
+          print 330,"Root-Mean Square Residue:            ", resid
+          print 330,"Tolerance:                           ", tol
+          print 330,"Max difference between iterations:   ", maxDeltaT
           print*,""
           print 230,"Maximum Temperature:                           ", Tmax, " K - Change from last time step: ", TmaxCh, " K"
           print 230,"Minimum Temperature:                           ", Tmin, " K - Change from last time step: ", TminCh, " K"
@@ -862,9 +911,13 @@
           print*," "
         end if
 
-        if ((mod(iter,10000) .GT. 0) .AND. (last .EQV. .TRUE.)) then
-            if ((totalIter - tsShLog) .GT. 1000) then
+        if ((mod(iter,1000) .GT. 0) .AND. (last .EQV. .TRUE.)) then
+
+            if ((totalIter - tsShLog) .GT. 100) then
+              print*
               print*,"=================================================================================================="
+              print*,"Final Step"
+              print*,"--------------------------------------------------------------------------------------------------"
               print 430,"CURRENT TIME STEP:         ", tstep, " seconds."
               print*
               print 430,"CURRENT TIME:              ", curTime, " seconds."
@@ -873,8 +926,9 @@
               print 130,"CONVERGENCE Monitor: Iterations = ", iter
               print 130,"Total iterations:                 ", totalIter
               print*,""
-              print 330,"Root-Mean Square Residue = ", resid
-              print 330,"Tolerance:                 ", tol
+              print 330,"Root-Mean Square Residue:            ", resid
+              print 330,"Tolerance:                           ", tol
+              print 330,"Max difference between iterations:   ", maxDeltaT
               print*,""
               print 230,"Maximum Temperature:                           ", Tmax, " K - Change from last time step: ", TmaxCh, " K"
               print 230,"Minimum Temperature:                           ", Tmin, " K - Change from last time step: ", TminCh, " K"
@@ -894,7 +948,7 @@
 
 
       subroutine calcOldStats()
-        use CustomDouble
+
         implicit none
 
 *       N: number of nodes in each direction
@@ -908,13 +962,21 @@
         common /tempres/ Tnew, Told
 
         real(dp) :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
-        common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg
+        integer :: Imin,Jmin
+        common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg,Imin,Jmin
+
+        integer :: Idummy, Jdummy
 
         real(dp) :: maxT,minT,avgT,sumT
 
         maxT = 0.0_dp
         minT = 1.0E5_dp
         sumT = 0.0_dp
+
+        Idummy = Imin
+        Jdummy = Jmin
+
+        print*,"T(", Imin,",",Jmin,")=", minT, " na entrada."
 
         do I = 1, N(1), 1
 
@@ -928,6 +990,8 @@
 
             if(Told(I,J) .LT. minT) then
               minT = Told(I,J)
+              Imin = I
+              Jmin = J
             end if
 
           end do
@@ -939,8 +1003,174 @@
         ToldMin = minT
         ToldAvg = avgT
 
+        print*,"T(", Idummy,",",Jdummy,")=", Told(Idummy,Jdummy), " na saida (calcResid)."
+        print*
+        print*
 
       end subroutine calcOldStats
+
+      function ShellThick(Ip,axis)
+        implicit none
+
+        real(dp) :: ShellThick
+        ! axis = 1 > X axis
+        ! axis = 2 > Y axis
+        integer ::  Ip, axis
+
+        integer :: I, J
+        integer :: Nx, Ny
+
+*       N: number of nodes in each direction
+*          1,2 indices refer to x and y respectively
+        integer :: N(1:2)
+        common /gridsize/ N
+
+        real(dp) :: Tnew(0:999,0:999),Told(0:999,0:999)
+        common /tempres/ Tnew, Told
+
+        real(dp) :: Np(1:999,1:999,1:2), Ni(1:999,1:999,1:2)
+        common /coordinate/ Np, Ni
+
+        ! XposLo, YposLo: marks the index of position with liquid fraction just below 0.01
+        ! XposHi, XposHi: marks the index of position with liquid fraction just above 0.01
+        integer :: XposLo, YposLo
+        integer :: XposHi, YposHi
+
+        real(dp) :: near_f_Lo, near_f_Hi
+
+        real(dp) :: liqFrac
+        logical :: skin
+
+        Nx = N(1)
+        Ny = N(2)
+
+        near_f_Lo = 0.0_dp
+        near_f_Hi = 1.0_dp
+        XposHi = 0
+        YposHi = 0
+        XposLo = 0
+        YposLo = 0
+
+        skin = .FALSE.
+
+        if (axis .EQ. 1) then
+
+          print*,"AXIS ", axis
+
+          ! Scan Y axis for a X constant
+          do J = Ny, 1, -1
+            liqFrac = f_Liq(Tnew(Ip,J))
+*            print*,"J:", J, "     LiqFrac = ", liqFrac
+
+109     format(' ', A, 1F12.6)
+
+*            if(mod(J,10) .EQ. 0) then
+*
+*              print*
+*              print*, "Pause"
+*
+*              print*
+*            end if
+
+            if ((liqFrac .GT. near_f_Lo) .AND. ((liqFrac - 0.05_dp) .LT. 0.0_dp)) then
+
+              print*,"neaf_f_Lo     Varredura em Y, X = ", Np(Ip,1,1)
+              print 109, "liqFrac - 0.05_dp = ", liqFrac - 0.05_dp
+              near_f_Lo = liqFrac
+              XposLo = Ip
+              YposLo = J
+              skin = .TRUE.
+              read*
+            end if
+
+            if ((liqFrac .LT. near_f_Hi) .AND. ((liqFrac - 0.05_dp) .GT. 0.0_dp)) then
+
+              print*,"neaf_f_Hi     Varredura em Y, X = ", Np(Ip,1,1)
+              print 109, "liqFrac - 0.05_dp = ", liqFrac - 0.05_dp
+              near_f_Hi = liqFrac
+              XposHi = Ip
+              YposHi = J
+              read*
+            end if
+
+          end do
+
+          print*
+          print*
+          print*," FIM DO CALC SHELL THICKNESS AXIS 01"
+          read*
+
+        end if
+
+        if (axis .EQ. 2) then
+
+          print*,"AXIS ", axis
+
+          ! Scan X axis for a Y constant
+          do I = Nx, 1, -1
+            liqFrac = f_Liq(Tnew(I,Ip))
+*            print*,"I:", I, "     LiqFrac = ", liqFrac
+
+*            if(mod(I,10) .EQ. 0) then
+*
+*              print*
+*              print*, "Pause"
+*              print*
+*            end if
+
+            if ((liqFrac .GT. near_f_Lo) .AND. ((liqFrac - 0.05_dp) .LT. 0.0_dp)) then
+
+              print*,"neaf_f_Lo     Varredura em X, Y = ", Np(1,Ip,2)
+              print 109, "liqFrac - 0.05_dp = ", liqFrac - 0.05_dp
+              near_f_Lo = liqFrac
+              XposLo = I
+              YposLo = Ip
+              skin = .TRUE.
+              read*
+            end if
+
+            if ((liqFrac .LT. near_f_Hi) .AND. ((liqFrac - 0.05_dp) .GT. 0.0_dp)) then
+
+              print*,"neaf_f_Hi     Varredura em X, Y = ", Np(1,Ip,2)
+              print 109, "liqFrac - 0.05_dp = ", liqFrac - 0.05_dp
+              near_f_Hi = liqFrac
+              XposHi = I
+              YposHi = Ip
+              read*
+            end if
+          end do
+
+          print*
+          print*
+          print*," FIM DO CALC SHELL THICKNESS AXIS 02"
+          read*
+        end if
+
+        if (skin .EQV. .TRUE.) then
+            print*,"Liquid fraction lower then 1%"
+            print*, "X pos = ", Np(XposLo,YposLo,1)
+            print*, "Y pos = ", Np(XposLo,YposLo,2)
+            print*, "liqFrac = ", f_Liq(Tnew(XposLo,YposLo))
+            print*
+            print*
+
+            print*,"Liquid fraction higher then 1%"
+            print*, "X pos = ", Np(XposHi,YposHi,1)
+            print*, "Y pos = ", Np(XposHi,YposHi,2)
+            print*, "liqFrac = ", f_Liq(Tnew(XposHi,YposHi))
+            print*
+            print*
+        end if
+
+        if (axis .EQ. 1) then
+          ShellThick = YposLo
+        end if
+
+        if (axis .EQ. 2) then
+          ShellThick = XposLo
+        end if
+
+      end function ShellThick
 
 
       end module Solver
