@@ -55,6 +55,9 @@
 			<Add option="-ffixed-form" />
 			<Add option="-Wall" />
 		</Compiler>
+		<ExtraCommands>
+			<Add after="rm -rf *.mod" />
+		</ExtraCommands>
 		<Unit filename="Coefficients.f">
 			<Option weight="2" />
 		</Unit>
