@@ -1055,95 +1055,60 @@
 
         if (axis .EQ. 1) then
 
-          print*,"AXIS ", axis
-
           ! Scan Y axis for a X constant
           do J = Ny, 1, -1
             liqFrac = f_Liq(Tnew(Ip,J))
-*            print*,"J:", J, "     LiqFrac = ", liqFrac
-
-109     format(' ', A, 1F12.6)
-
-*            if(mod(J,10) .EQ. 0) then
-*
-*              print*
-*              print*, "Pause"
-*
-*              print*
-*            end if
-
-            if ((liqFrac .GT. near_f_Lo) .AND. ((liqFrac - 0.05_dp) .LT. 0.0_dp)) then
-
-              print*,"neaf_f_Lo     Varredura em Y, X = ", Np(Ip,1,1)
-              print 109, "liqFrac - 0.05_dp = ", liqFrac - 0.05_dp
+            print*,"J:", J, "     LiqFrac = ", liqFrac
+            if ((liqFrac .GT. near_f_Lo) .AND. (liqFrac .LT. 0.05_dp)) then
               near_f_Lo = liqFrac
               XposLo = Ip
               YposLo = J
               skin = .TRUE.
-              read*
             end if
 
-            if ((liqFrac .LT. near_f_Hi) .AND. ((liqFrac - 0.05_dp) .GT. 0.0_dp)) then
-
-              print*,"neaf_f_Hi     Varredura em Y, X = ", Np(Ip,1,1)
-              print 109, "liqFrac - 0.05_dp = ", liqFrac - 0.05_dp
+            if ((liqFrac .LT. near_f_Hi) .AND. (liqFrac .GT. 0.05_dp)) then
               near_f_Hi = liqFrac
               XposHi = Ip
               YposHi = J
-              read*
             end if
 
           end do
 
           print*
           print*
-          print*," FIM DO CALC SHELL THICKNESS AXIS 01"
-          read*
 
         end if
 
         if (axis .EQ. 2) then
 
-          print*,"AXIS ", axis
-
           ! Scan X axis for a Y constant
           do I = Nx, 1, -1
             liqFrac = f_Liq(Tnew(I,Ip))
-*            print*,"I:", I, "     LiqFrac = ", liqFrac
+            print*,"I:", I, "     LiqFrac = ", liqFrac
 
-*            if(mod(I,10) .EQ. 0) then
-*
-*              print*
-*              print*, "Pause"
-*              print*
-*            end if
+            if(mod(I,10) .EQ. 0) then
+              print*
+              print*, "Pause"
+              print*
+            end if
 
-            if ((liqFrac .GT. near_f_Lo) .AND. ((liqFrac - 0.05_dp) .LT. 0.0_dp)) then
-
-              print*,"neaf_f_Lo     Varredura em X, Y = ", Np(1,Ip,2)
-              print 109, "liqFrac - 0.05_dp = ", liqFrac - 0.05_dp
+            if ((liqFrac .GT. near_f_Lo) .AND. (liqFrac .LT. 0.05)) then
               near_f_Lo = liqFrac
               XposLo = I
               YposLo = Ip
               skin = .TRUE.
-              read*
             end if
 
-            if ((liqFrac .LT. near_f_Hi) .AND. ((liqFrac - 0.05_dp) .GT. 0.0_dp)) then
-
-              print*,"neaf_f_Hi     Varredura em X, Y = ", Np(1,Ip,2)
-              print 109, "liqFrac - 0.05_dp = ", liqFrac - 0.05_dp
+            if ((liqFrac .LT. near_f_Hi) .AND. (liqFrac .GT. 0.05)) then
               near_f_Hi = liqFrac
               XposHi = I
               YposHi = Ip
-              read*
             end if
           end do
 
           print*
           print*
-          print*," FIM DO CALC SHELL THICKNESS AXIS 02"
-          read*
+
         end if
 
         if (skin .EQV. .TRUE.) then
