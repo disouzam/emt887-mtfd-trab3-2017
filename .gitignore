@@ -41,3 +41,8 @@
 *.dwo
 *.layout
 *.depend
+.src-pdf/Coefficients.pdf
+.src-pdf/Geometry.pdf
+.src-pdf/main.pdf
+.src-pdf/Properties.pdf
+.src-pdf/Solver.pdf
