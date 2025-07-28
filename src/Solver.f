@@ -6,9 +6,7 @@
 
       module Solver
         use Coefficients
-        use CustomDouble
         use Properties
-        use Results
 
         implicit none
 
@@ -21,9 +19,9 @@
         integer :: N(1:2)
         common /gridsize/ N
 
-        real(dp) :: maxDeltaT
+        double precision :: maxDeltaT
 
-        real(dp) :: tol, total, alpha, resid
+        double precision :: tol, total, alpha, resid
 
         integer :: I, J, Nx, Ny
 
@@ -33,26 +31,26 @@
         logical :: debugmode
         common /dbgMode/ debugmode
 
-        real(dp) :: Tnew(0:999,0:999),Told(0:999,0:999)
+        double precision :: Tnew(0:999,0:999), Told(0:999,0:999)
         common /tempres/ Tnew, Told
 
-        real(dp) :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
+        double precision :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
         integer :: Imin,Jmin
         common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg,Imin,Jmin
 
-        real(dp) :: Del(1:999,1:999,1:2), Delta(1:999,1:999,1:2)
+        double precision :: Del(1:999,1:999,1:2), Delta(1:999,1:999,1:2)
         common /mesh/ Del, Delta
 
-        real(dp) :: Delta_t
+        double precision :: Delta_t
 
-        real(dp) :: Np(1:999,1:999,1:2),Ni(1:999,1:999,1:2)
+        double precision :: Np(1:999,1:999,1:2),Ni(1:999,1:999,1:2)
         common /coordinate/ Np, Ni
 
-        real(dp) :: TitV(0:999,0:999)
+        double precision :: TitV(0:999,0:999)
 
-        real(dp) :: Aw(1:999,1:999), Ae(1:999,1:999)
-        real(dp) :: An(1:999,1:999), As(1:999,1:999)
-        real(dp) :: Ap(1:999,1:999), b(1:999,1:999)
+        double precision :: Aw(1:999,1:999), Ae(1:999,1:999)
+        double precision :: An(1:999,1:999), As(1:999,1:999)
+        double precision :: Ap(1:999,1:999), b(1:999,1:999)
 
         character(LEN=50) :: name
         logical :: last
@@ -61,10 +59,10 @@
         Nx = N(1)
         Ny = N(2)
 
-        Told(0,:) = 0.0_dp
-        Told(:,0) = 0.0_dp
-        Told(Nx+1,:) = 0.0_dp
-        Told(:,Ny+1) = 0.0_dp
+        Told(0,:) = Told(2,:)
+        Told(:,0) = Told(:,2)
+        Told(Nx+1,:) = 0.0D0
+        Told(:,Ny+1) = 0.0D0
 
         ToldMax = Tmax
         ToldMin = Tmin
@@ -75,12 +73,15 @@
         Tnew(:,:) = Told(:,:)
 
 *       Implementation of Jacobi Algorithm
-        resid = 100.0_dp
+        resid = 100.0D0
         iter = 0
         do while (resid .GT. tol)
 
 *         Calculate coefficients for a 2D problem
           call coeff2D(Aw,Ae,An,As,Ap,b,Delta_t)
+
+          TitV(0,:) = TitV(2,:)
+          TitV(:,0) = TitV(:,2)
 
 *         Solving linear system
           do I = 1, Nx , 1
@@ -122,32 +123,31 @@
 
 
       subroutine GaSe2D(Delta_t,tol,alpha)
-        use CustomDouble
 
         implicit none
 
         logical :: debugmode
         common /dbgMode/ debugmode
 
-        real(dp) :: maxDeltaT
+        double precision :: maxDeltaT
 
         integer :: iter, curTimeStep, totalIter
         common /control/ iter, curTimeStep, totalIter
 
-        real(dp) :: TitV(0:999,0:999)
-        real(dp) :: Tnew(0:999,0:999),Told(0:999,0:999)
+        double precision :: TitV(0:999,0:999)
+        double precision :: Tnew(0:999,0:999), Told(0:999,0:999)
         common /tempres/ Tnew, Told
 
-        real(dp) :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
+        double precision :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
         integer :: Imin,Jmin
         common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg,Imin,Jmin
 
-        real(dp) :: Del(1:999,1:999,1:2), Delta(1:999,1:999,1:2)
+        double precision :: Del(1:999,1:999,1:2), Delta(1:999,1:999,1:2)
         common /mesh/ Del, Delta
 
-        real(dp) :: Delta_t
+        double precision :: Delta_t
 
-        real(dp) :: Np(1:999,1:999,1:2),Ni(1:999,1:999,1:2)
+        double precision :: Np(1:999,1:999,1:2),Ni(1:999,1:999,1:2)
         common /coordinate/ Np, Ni
 
         integer :: N(1:2)
@@ -155,11 +155,11 @@
 
         integer :: I, J, Nx, Ny
 
-        real(dp) :: tol, temp, total,alpha,resid
+        double precision :: tol, temp, total,alpha,resid
 
-        real(dp) :: Aw(1:999,1:999), Ae(1:999,1:999)
-        real(dp) :: An(1:999,1:999), As(1:999,1:999)
-        real(dp) :: Ap(1:999,1:999), b(1:999,1:999)
+        double precision :: Aw(1:999,1:999), Ae(1:999,1:999)
+        double precision :: An(1:999,1:999), As(1:999,1:999)
+        double precision :: Ap(1:999,1:999), b(1:999,1:999)
 
         logical :: last
         character(LEN=50) :: name
@@ -169,10 +169,10 @@
         Nx = N(1)
         Ny = N(2)
 
-        Told(0,:) = 0.0_dp
-        Told(:,0) = 0.0_dp
-        Told(Nx+1,:) = 0.0_dp
-        Told(:,Ny+1) = 0.0_dp
+        Told(0,:) = Told(2,:)
+        Told(:,0) = Told(:,2)
+        Told(Nx+1,:) = 0.0D0
+        Told(:,Ny+1) = 0.0D0
 
         ToldMax = Tmax
         ToldMin = Tmin
@@ -183,15 +183,14 @@
         Tnew(:,:) = Told(:,:)
 
 *       Implementation of Gauss-Seidel Algorithm (properly)
-        resid = 100.0_dp
+        resid = 100.0D0
         iter = 0
         do while (resid .GT. tol)
 
 *         Calculate coefficients for a 2D problem
           call coeff2D(Aw,Ae,An,As,Ap,b,Delta_t)
 
-          maxDeltaT = 0.0_dp
-          print*, resid
+          maxDeltaT = 0.0D0
 
 *         Solving linear system
           do I = 1, Nx , 1
@@ -203,7 +202,7 @@
               total = total + b(I,J)
               temp = Tnew(I,J)
 
-              if (alpha .NE. 1.0_dp) then
+              if (alpha .NE. 1.0D0) then
                 Tnew(I,J) = temp + alpha * (total / Ap(I,J) - temp)
               else
                 Tnew(I,J) = total / Ap(I,J)
@@ -236,7 +235,7 @@
 
 *     TDMA
       subroutine TDMA2D(Delta_t,tol,alpha)
-        use CustomDouble
+
         implicit none
 
         logical :: debugmode
@@ -245,7 +244,7 @@
         integer :: iter, curTimeStep, totalIter
         common /control/ iter, curTimeStep, totalIter
 
-        real(dp) :: Del(1:999,1:999,1:2), Delta(1:999,1:999,1:2)
+        double precision :: Del(1:999,1:999,1:2), Delta(1:999,1:999,1:2)
         common /mesh/ Del, Delta
 
         integer :: N(1:2)
@@ -253,45 +252,45 @@
 
         integer :: I, J, Nx, Ny
 
-        real(dp) :: resid, tol, temp, total,alpha,Delta_t
+        double precision :: resid, tol, temp, total,alpha,Delta_t
 
-        real(dp) :: TitV(0:999,0:999)
-        real(dp) :: Tnew(0:999,0:999),Told(0:999,0:999)
+        double precision :: TitV(0:999,0:999)
+        double precision :: Tnew(0:999,0:999), Told(0:999,0:999)
         common /tempres/ Tnew, Told
 
-        real(dp) :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
+        double precision :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
         integer :: Imin,Jmin
         common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg,Imin,Jmin
 
-        real(dp) :: maxDeltaT
+        double precision :: maxDeltaT
 
-        real(dp) :: Tw, Te, Ts, Tn
+        double precision :: Tw, Te, Ts, Tn
 
-        real(dp) :: Aw(1:999,1:999), Ae(1:999,1:999)
-        real(dp) :: An(1:999,1:999), As(1:999,1:999)
-        real(dp) :: Ap(1:999,1:999), b(1:999,1:999)
+        double precision :: Aw(1:999,1:999), Ae(1:999,1:999)
+        double precision :: An(1:999,1:999), As(1:999,1:999)
+        double precision :: Ap(1:999,1:999), b(1:999,1:999)
 
 *       Solve each horizontal lines (nodes along X axis are solved at each line)
 *       Temperatures above and below the line being calculated are considered to be known
-        real(dp) :: P(0:999),Q(0:999)
+        double precision :: P(0:999),Q(0:999)
 
-        real(dp) :: Np(1:999,1:999,1:2),Ni(1:999,1:999,1:2)
+        double precision :: Np(1:999,1:999,1:2),Ni(1:999,1:999,1:2)
         common /coordinate/ Np, Ni
 
         logical :: last
         character(LEN=50) :: name
         name = "TDMA 2D (without ADI)"
 
-        maxDeltaT = 0.0_dp
+        maxDeltaT = 0.0D0
 
 *       Boundary conditions
         Nx = N(1)
         Ny = N(2)
 
-        Told(0,:) = 0.0_dp
-        Told(:,0) = 0.0_dp
-        Told(Nx+1,:) = 0.0_dp
-        Told(:,Ny+1) = 0.0_dp
+        Told(0,:) = 0.0D0
+        Told(:,0) = 0.0D0
+        Told(Nx+1,:) = 0.0D0
+        Told(:,Ny+1) = 0.0D0
 
         ToldMax = Tmax
         ToldMin = Tmin
@@ -303,7 +302,7 @@
 
         iter = 0
         temp = 1
-        resid= 1.0E5_dp
+        resid= 1.0D5
         do while (resid .GT. tol)
 
 *         Calculate coefficients for a 2D problem
@@ -313,7 +312,6 @@
 
 *           define P1, Q1
             P(1) = Ae(1,J) / Ap(1,J)
-
 
             Tw = Tnew(0,J)
             Tn = Tnew(1,J+1)
@@ -382,15 +380,6 @@
           last = .FALSE.
           call convMonitor(name,resid,tol,maxDeltaT,last,Delta_t)
 
-*107     format(' ', A, 1F12.6)
-*207     format(' ', A, 1E12.6)
-*
-*          print 107,"TDMA - Resid:     ", resid
-*          print 107,"TDMA - Tol:       ", tol
-*          print 207,"TDMA - maxDeltaT: ", maxDeltaT
-*          print*
-*          print*
-
         end do
 
         last = .TRUE.
@@ -404,18 +393,18 @@
 
 
       subroutine TDMA2dADI(Delta_t,tol,alpha)
-        use CustomDouble
+
         implicit none
 
         logical :: debugmode
         common /dbgMode/ debugmode
 
-        real(dp) :: maxDeltaT
+        double precision :: maxDeltaT
 
         integer :: iter, curTimeStep, totalIter
         common /control/ iter, curTimeStep, totalIter
 
-        real(dp) :: Del(1:999,1:999,1:2), Delta(1:999,1:999,1:2)
+        double precision :: Del(1:999,1:999,1:2), Delta(1:999,1:999,1:2)
         common /mesh/ Del, Delta
 
         integer :: N(1:2)
@@ -423,42 +412,41 @@
 
         integer :: I, J, Nx, Ny
 
-        real(dp) :: resid, tol, temp, total,alpha,Delta_t
+        double precision :: resid, tol, temp, total,alpha,Delta_t
 
-        real(dp) :: TitV(0:999,0:999)
-        real(dp) :: Tnew(0:999,0:999),Told(0:999,0:999)
+        double precision :: TitV(0:999,0:999)
+        double precision :: Tnew(0:999,0:999), Told(0:999,0:999)
         common /tempres/ Tnew, Told
 
-        real(dp) :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
+        double precision :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
         integer :: Imin,Jmin
         common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg,Imin,Jmin
 
-        real(dp) :: Tw, Te, Ts, Tn
+        double precision :: Tw, Te, Ts, Tn
 
-        real(dp) :: Aw(1:999,1:999), Ae(1:999,1:999)
-        real(dp) :: An(1:999,1:999), As(1:999,1:999)
-        real(dp) :: Ap(1:999,1:999), b(1:999,1:999)
+        double precision :: Aw(1:999,1:999), Ae(1:999,1:999)
+        double precision :: An(1:999,1:999), As(1:999,1:999)
+        double precision :: Ap(1:999,1:999), b(1:999,1:999)
 
 *       Solve each horizontal lines (nodes along X axis are solved at each line)
 *       Temperatures above and below the line being calculated are considered to be known
-        real(dp) :: P(0:999),Q(0:999)
+        double precision :: P(0:999),Q(0:999)
 
-        real(dp) :: Np(1:999,1:999,1:2),Ni(1:999,1:999,1:2)
+        double precision :: Np(1:999,1:999,1:2),Ni(1:999,1:999,1:2)
         common /coordinate/ Np, Ni
 
         logical :: last
         character(LEN=50) :: name
         name = "TDMA 2D with ADI"
 
-
 *       Boundary conditions
         Nx = N(1)
         Ny = N(2)
 
-        Told(0,:) = 0.0_dp
-        Told(:,0) = 0.0_dp
-        Told(Nx+1,:) = 0.0_dp
-        Told(:,Ny+1) = 0.0_dp
+        Told(0,:) = 0.0D0
+        Told(:,0) = 0.0D0
+        Told(Nx+1,:) = 0.0D0
+        Told(:,Ny+1) = 0.0D0
 
         ToldMax = Tmax
         ToldMin = Tmin
@@ -470,7 +458,7 @@
 
         iter = 0
         temp = 1
-        resid= 100.0_dp
+        resid= 100.0D0
         do while (resid .GT. tol)
 
 *         Calculate coefficients for a 2D problem
@@ -748,7 +736,7 @@
 
 
       function calcResid(Aw,Ae,An,As,Ap,b)
-        use CustomDouble
+
         implicit none
 
         logical :: debugmode
@@ -760,37 +748,35 @@
         ! SteelChem(4): Phosphorus
         ! SteelChem(5): Sulfur
         ! SteelChem(6): Aluminium
-        real(dp) :: SteelChem(1:6)
+        double precision :: SteelChem(1:6)
         common /steelprop/ SteelChem
 
-        real(dp) :: Tliq
+        double precision :: Tliq
 
-        real(dp) :: calcResid
-        real(dp) :: resid
+        double precision :: calcResid
+        double precision :: resid
 
         integer :: N(1:2)
         common /gridsize/ N
 
         integer :: I, J, Nx, Ny
 
-        real(dp) :: Tnew(0:999,0:999),Told(0:999,0:999)
+        double precision :: Tnew(0:999,0:999), Told(0:999,0:999)
         common /tempres/ Tnew, Told
 
-        real(dp) :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
+        double precision :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
         integer :: Imin,Jmin
         common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg,Imin,Jmin
 
         integer :: Idummy, Jdummy
 
 
-        real(dp) :: sumT
+        double precision :: sumT
 
-        real(dp) :: Aw(1:999,1:999), Ae(1:999,1:999)
-        real(dp) :: An(1:999,1:999), As(1:999,1:999)
-        real(dp) :: Ap(1:999,1:999), b(1:999,1:999)
-        real(dp) :: total
-
-103     format(' ', A, 1F12.4, A)
+        double precision :: Aw(1:999,1:999), Ae(1:999,1:999)
+        double precision :: An(1:999,1:999), As(1:999,1:999)
+        double precision :: Ap(1:999,1:999), b(1:999,1:999)
+        double precision :: total
 
         Nx = N(1)
         Ny = N(2)
@@ -800,12 +786,10 @@
         Idummy = Imin
         Jdummy = Jmin
 
-*        print*,"T(", Imin,",",Jmin,")=", Tmin, " na entrada (calcResid)."
-
-        sumT = 0.0_dp
-        resid = 0.0_dp
-        Tmax = 0.0_dp
-        Tmin = 1.0E5_dp
+        sumT = 0.0D0
+        resid = 0.0D0
+        Tmax = 0.0D0
+        Tmin = 1.0D5
         do I = 1, Nx , 1
           do J = 1, Ny, 1
             total = Aw(I,J) * Tnew(I-1,J)
@@ -816,11 +800,11 @@
 
             sumT = sumT + Tnew(I,J)
 
-            if ((Tnew(I,J) - Tmax) .GT. 1.0E-8_dp) then
+            if ((Tnew(I,J) - Tmax) .GT. 1.0D-8) then
               Tmax = Tnew(I,J)
             end if
 
-            if ((Tmin - Tnew(I,J)) .GT. 1.0E-8_dp) then
+            if ((Tmin - Tnew(I,J)) .GT. 1.0D-8) then
               Tmin = Tnew(I,J)
               Imin = I
               Jmin = J
@@ -830,15 +814,8 @@
           end do
         end do
 
-*        print*,"T(", Idummy,",",Jdummy,")=", Tnew(Idummy,Jdummy), " na saida (calcResid)."
-*        print*
-*        print*
-
         resid = sqrt(resid) / (Nx * Ny)
-
-*        print*,"Resid = ", resid
         calcResid = resid
-
         Tavg = sumT / (Nx * Ny)
 
       end function calcResid
@@ -848,25 +825,45 @@
 
 
       subroutine convMonitor(name,resid,tol,maxDeltaT,last,tstep)
-        use CustomDouble
+
         implicit none
 
         character(LEN=50) :: name
-        real(dp) :: resid, tol,tstep
+        double precision :: resid, tol,tstep
         logical :: last
 
-        real(dp) :: maxDeltaT
+*       First index: 9 nodes x 9 nodes = 81 selected positions to be saved
+*       Second index: up to 50000 time steps
+*       Third index:
+*          1: curTime
+*          2: X position
+*          3: Y position
+*          4: Temperature
+*          5: Equivalent Specific heat
+*          6: Thermal conductivity
+*          7: Liquid fraction
+
+*       ShThick
+*       First index: 1 for X axis, 2 for Y axis
+*       Second index: curTime
+        double precision :: TmRs(1:81,0:50000,1:7), ShThick(1:3,0:50000)
+        common /transient/ TmRs, ShThick
+
+        integer :: maxX, maxY, Xi(9), Yi(9), tsSavPos
+        common /storeLimits/ maxX, maxY, Xi, Yi, tsSavPos
+
+        double precision :: maxDeltaT
 
         integer :: iter, curTimeStep, totalIter
         common /control/ iter, curTimeStep, totalIter
 
-        real(dp) :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
+        double precision :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
         integer :: Imin,Jmin
         common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg,Imin,Jmin
 
-        real(dp) :: TmaxCh, TminCh, TavgCh
+        double precision :: TmaxCh, TminCh, TavgCh
 
-        real(dp) :: simTime, curTime, num_steps, timeStep
+        double precision :: simTime, curTime, num_steps, timeStep
         integer :: timeChoice, TStepSavingPeriod
         common /time/ simTime, curTime, num_steps, timeStep, TStepSavingPeriod, timeChoice
 
@@ -913,7 +910,7 @@
 
         if ((mod(iter,1000) .GT. 0) .AND. (last .EQV. .TRUE.)) then
 
-            if ((totalIter - tsShLog) .GT. 100) then
+            if ((totalIter - tsShLog) .GT. 1000) then
               print*
               print*,"=================================================================================================="
               print*,"Final Step"
@@ -958,25 +955,23 @@
 
         integer :: I, J
 
-        real(dp) :: Tnew(0:999,0:999),Told(0:999,0:999)
+        double precision :: Tnew(0:999,0:999), Told(0:999,0:999)
         common /tempres/ Tnew, Told
 
-        real(dp) :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
+        double precision :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
         integer :: Imin,Jmin
         common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg,Imin,Jmin
 
         integer :: Idummy, Jdummy
 
-        real(dp) :: maxT,minT,avgT,sumT
+        double precision :: maxT,minT,avgT,sumT
 
-        maxT = 0.0_dp
-        minT = 1.0E5_dp
-        sumT = 0.0_dp
+        maxT = 0.0D0
+        minT = 1.0D5
+        sumT = 0.0D0
 
         Idummy = Imin
         Jdummy = Jmin
-
-        print*,"T(", Imin,",",Jmin,")=", minT, " na entrada."
 
         do I = 1, N(1), 1
 
@@ -1003,16 +998,13 @@
         ToldMin = minT
         ToldAvg = avgT
 
-        print*,"T(", Idummy,",",Jdummy,")=", Told(Idummy,Jdummy), " na saida (calcResid)."
-        print*
-        print*
-
       end subroutine calcOldStats
+
 
       function ShellThick(Ip,axis)
         implicit none
 
-        real(dp) :: ShellThick
+        double precision :: ShellThick
         ! axis = 1 > X axis
         ! axis = 2 > Y axis
         integer ::  Ip, axis
@@ -1025,10 +1017,10 @@
         integer :: N(1:2)
         common /gridsize/ N
 
-        real(dp) :: Tnew(0:999,0:999),Told(0:999,0:999)
+        double precision :: Tnew(0:999,0:999), Told(0:999,0:999)
         common /tempres/ Tnew, Told
 
-        real(dp) :: Np(1:999,1:999,1:2), Ni(1:999,1:999,1:2)
+        double precision :: Np(1:999,1:999,1:2), NI(1:999,1:999,1:2)
         common /coordinate/ Np, Ni
 
         ! XposLo, YposLo: marks the index of position with liquid fraction just below 0.01
@@ -1036,20 +1028,22 @@
         integer :: XposLo, YposLo
         integer :: XposHi, YposHi
 
-        real(dp) :: near_f_Lo, near_f_Hi
+        double precision :: dummy, m
 
-        real(dp) :: liqFrac
+        double precision :: near_f_Lo, near_f_Hi
+
+        double precision :: liqFrac
         logical :: skin
 
         Nx = N(1)
         Ny = N(2)
 
-        near_f_Lo = 0.0_dp
-        near_f_Hi = 1.0_dp
-        XposHi = 0
-        YposHi = 0
-        XposLo = 0
-        YposLo = 0
+        near_f_Lo = -1.0D0
+        near_f_Hi = 1.0D0
+        XposHi = 1
+        YposHi = 1
+        XposLo = 1
+        YposLo = 1
 
         skin = .FALSE.
 
@@ -1058,24 +1052,28 @@
           ! Scan Y axis for a X constant
           do J = Ny, 1, -1
             liqFrac = f_Liq(Tnew(Ip,J))
-            print*,"J:", J, "     LiqFrac = ", liqFrac
-            if ((liqFrac .GT. near_f_Lo) .AND. (liqFrac .LT. 0.05_dp)) then
-              near_f_Lo = liqFrac
-              XposLo = Ip
-              YposLo = J
-              skin = .TRUE.
+
+            if (liqFrac .GE. near_f_Lo) then
+              if ((liqFrac - 0.05D0) .LE. 0.0D0) then
+                near_f_Lo = liqFrac
+
+                XposLo = Ip
+                YposLo = J
+                skin = .TRUE.
+              end if
             end if
 
-            if ((liqFrac .LT. near_f_Hi) .AND. (liqFrac .GT. 0.05_dp)) then
-              near_f_Hi = liqFrac
-              XposHi = Ip
-              YposHi = J
+            if (liqFrac .LE. near_f_Hi) then
+              if ((liqFrac - 0.05D0) .GT. 0.0D0) then
+
+                near_f_Hi = liqFrac
+                XposHi = Ip
+                YposHi = J
+
+              end if
             end if
 
           end do
-
-          print*
-          print*
 
         end if
 
@@ -1084,58 +1082,50 @@
           ! Scan X axis for a Y constant
           do I = Nx, 1, -1
             liqFrac = f_Liq(Tnew(I,Ip))
-            print*,"I:", I, "     LiqFrac = ", liqFrac
 
-            if(mod(I,10) .EQ. 0) then
-              print*
-              print*, "Pause"
-              print*
+            if (liqFrac .GE. near_f_Lo) then
+              if ((liqFrac - 0.05D0) .LE. 0.0D0) then
+                near_f_Lo = liqFrac
+                XposLo = I
+                YposLo = Ip
+                skin = .TRUE.
+              end if
             end if
 
-            if ((liqFrac .GT. near_f_Lo) .AND. (liqFrac .LT. 0.05)) then
-              near_f_Lo = liqFrac
-              XposLo = I
-              YposLo = Ip
-              skin = .TRUE.
+            if (liqFrac .LE. near_f_Hi) then
+              if ((liqFrac - 0.05D0) .GT. 0.0D0) then
+                near_f_Hi = liqFrac
+                XposHi = I
+                YposHi = Ip
+              end if
             end if
 
-            if ((liqFrac .LT. near_f_Hi) .AND. (liqFrac .GT. 0.05)) then
-              near_f_Hi = liqFrac
-              XposHi = I
-              YposHi = Ip
-            end if
           end do
 
-          print*
-          print*
-
         end if
 
-        if (skin .EQV. .TRUE.) then
-            print*,"Liquid fraction lower then 1%"
-            print*, "X pos = ", Np(XposLo,YposLo,1)
-            print*, "Y pos = ", Np(XposLo,YposLo,2)
-            print*, "liqFrac = ", f_Liq(Tnew(XposLo,YposLo))
-            print*
-            print*
-
-            print*,"Liquid fraction higher then 1%"
-            print*, "X pos = ", Np(XposHi,YposHi,1)
-            print*, "Y pos = ", Np(XposHi,YposHi,2)
-            print*, "liqFrac = ", f_Liq(Tnew(XposHi,YposHi))
-            print*
-            print*
-        end if
+        ShellThick = 0.0D0
 
         if (axis .EQ. 1) then
-          ShellThick = YposLo
+          if (skin .EQV. .TRUE.) then
+            m = (near_f_Lo - near_f_Hi)
+            m = m / (Np(XposLo,YposLo,2) - Np(XposHi,YposHi,2))
+            dummy = (0.05D0 - near_f_Lo) / m
+            dummy = Np(XposLo,YposLo,2) + dummy
+            ShellThick = Np(Nx,Ny,2) - dummy
+          end if
         end if
 
         if (axis .EQ. 2) then
-          ShellThick = XposLo
+          if (skin .EQV. .TRUE.) then
+            m = (near_f_Lo - near_f_Hi)
+            m = m / (Np(XposLo,YposLo,1) - Np(XposHi,YposHi,1))
+            dummy = (0.05D0 - near_f_Lo) / m
+            dummy = Np(XposLo,YposLo,1) + dummy
+            ShellThick = Np(Nx,Ny,1) - dummy
+          end if
         end if
 
       end function ShellThick
-
 
       end module Solver

@@ -16,7 +16,7 @@
         implicit none
 
         integer :: Nx, I
-        real(dp) :: Temp(0:999,0:0)
+        real(dp) :: Temp(0:200,0:0)
 
         print*, "========================================================"
         print*, "Results for 1D calculation will be printed out on screen"
@@ -43,8 +43,8 @@
         integer :: I, J
 
         real(dp) :: curTime
-        real(dp) :: Temp(0:999,0:999)
-        real(dp) :: Np(1:999,1:999,1:2)
+        real(dp) :: Temp(0:200,0:200)
+        real(dp) :: Np(1:200,1:200,1:2)
         character(LEN=50) :: name
 
         print*, "========================================================"
@@ -90,8 +90,8 @@
 
         integer ::  I, J
 
-        real(dp) :: Temp(0:999,0:999)
-        real(dp) :: Np(1:999,1:999,1:2)
+        real(dp) :: Temp(0:200,0:200)
+        real(dp) :: Np(1:200,1:200,1:2)
         character(LEN=50) :: name
 
         print*, "==============================================================="
@@ -134,8 +134,8 @@
         integer :: N(1:2), I, J
         integer :: Imax,Jmax
         real(dp) :: maxdiff, temp
-        real(dp) :: TGaSe(0:999,0:999)
-        real(dp) :: TTDMA(0:999,0:999)
+        real(dp) :: TGaSe(0:200,0:200)
+        real(dp) :: TTDMA(0:200,0:200)
 
         maxdiff = 0
         Imax = 0
@@ -166,8 +166,8 @@
         implicit none
 
         integer :: N(1:3), I, J, interN, totalN
-        real(dp) :: Temp(0:999,0:999)
-        real(dp) :: NPx(1:999), NPy(1:999)
+        real(dp) :: Temp(0:200,0:200)
+        real(dp) :: NPx(1:200), NPy(1:200)
         character(LEN=50) :: name
 
         interN = 0

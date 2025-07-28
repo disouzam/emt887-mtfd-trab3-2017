@@ -6,10 +6,8 @@
       program Trab3
 
 *Modules
-        use CustomDouble
         use Coefficients
         use Geometry
-        use Results
         use Solver
         use Properties
 
@@ -23,7 +21,7 @@
 
 *       Lth: Lenght along each direction
 *          1,2 indices refer to x and y respectively
-        real(dp) :: Lth(1:2)
+        double precision :: Lth(1:2)
         common /domainsize/ Lth
 
 *       N: number of nodes in each direction
@@ -43,7 +41,7 @@
 *       Index ranges from 1 to N(1)  in X direction, from 1 to N(2) in Y direction.
 *         The first two indices locate the node indexes  - I for x axis and J for y axis
 *         The third index indicates if its a distance in X direction (index = 1) or in Y direction (index = 2)
-        real(dp) :: Del(1:999,1:999,1:2),Delta(1:999,1:999,1:2)
+        double precision :: Del(1:999,1:999,1:2),Delta(1:999,1:999,1:2)
         common /mesh/ Del, Delta
 
 *       Np: array containing node positions in X and Y axis (to be calculated)
@@ -55,22 +53,23 @@
 *       Index ranges from 1 to N(1) + 1 in X direction, from 1 to N(2) + 1 in Y direction.
 *           The first two indices locate the node indexes  - I for x axis and J for y axis
 *           The third index indicates if its a distance in X direction (index = 1) or in Y direction (index = 2)
-        real(dp) :: Np(1:999,1:999,1:2), Ni(1:999,1:999,1:2)
+        double precision :: Np(1:999,1:999,1:2), NI(1:999,1:999,1:2)
         common /coordinate/ Np, Ni
 
-        real(dp) :: mouldLen, SecColLen1, SecColLen2, SecColLen3, CasSpd, Tf
+        double precision :: mouldLen, SecColLen1, SecColLen2, SecColLen3, CasSpd, Tf
         common /boundCondLen/ mouldLen, SecColLen1, SecColLen2, SecColLen3, CasSpd, Tf
 
-        real(dp) :: W1, W2, H3
+        double precision :: W1, W2, H3
         common /secCooling/ W1, W2, H3
 
-        real(dp) :: Tnew(0:999,0:999), Told(0:999,0:999)
+        double precision :: Tnew(0:999,0:999), Told(0:999,0:999)
         common /tempRes/ Tnew, Told
 
-        real(dp) :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
+        double precision :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
         integer :: Imin,Jmin
         common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg,Imin,Jmin
 
+*       TmRs
 *       First index: 9 nodes x 9 nodes = 81 selected positions to be saved
 *       Second index: up to 50000 time steps
 *       Third index:
@@ -81,21 +80,25 @@
 *          5: Specific heat
 *          6: Thermal conductivity
 *          7: Liquid fraction
-        real(dp) :: TmRs(1:81,0:50000,1:7)
-        common /transient/ TmRs
 
-        real(dp) :: simTime, curTime, num_steps, timeStep
+*       ShThick
+*       First index: 1 for X axis, 2 for Y axis
+*       Second index: curTime
+        double precision :: TmRs(1:81,0:50000,1:7), ShThick(1:3,0:50000)
+        common /transient/ TmRs, ShThick
+
+        double precision :: simTime, curTime, num_steps, timeStep
         integer :: timeChoice, TStepSavingPeriod
         common /time/ simTime, curTime, num_steps, timeStep, TStepSavingPeriod, timeChoice
 
         integer :: meth,relax_m, ADI
-        real(dp) :: tol, alpha
+        double precision :: tol, alpha
         common /solMethod/ tol, alpha, meth, relax_m, ADI
 
         integer :: iter, curTimeStep, totalIter
         common /control/ iter, curTimeStep, totalIter
 
-        real(dp) :: dens
+        double precision :: dens
         common /density/ dens
 *       Tolerance value for iterative methods - it defines the stopping criteria
 *       It is an absolute value, i.e. it is intented to be the maximum value
@@ -108,7 +111,7 @@
         ! SteelChem(4): Phosphorus
         ! SteelChem(5): Sulfur
         ! SteelChem(6): Aluminium
-        real(dp) :: SteelChem(1:6)
+        double precision :: SteelChem(1:6)
         common /steelprop/ SteelChem
 
         ! Define the formula for liquid fraction calculation: lever rule or linear variation in mushy zone
@@ -117,17 +120,17 @@
         integer :: mode
         common /LiqFracCalc/ mode
 
-        mode = 2
+        mode = 1
 
-        SteelChem(1) = 0.08_dp
-        SteelChem(2) = 0.42_dp
-        SteelChem(3) = 0.05_dp
-        SteelChem(4) = 0.008_dp
-        SteelChem(5) = 0.005_dp
-        SteelChem(6) = 0.00_dp
+        SteelChem(1) = 0.08D0
+        SteelChem(2) = 0.42D0
+        SteelChem(3) = 0.05D0
+        SteelChem(4) = 0.008D0
+        SteelChem(5) = 0.005D0
+        SteelChem(6) = 0.00D0
 
 *       In debug mode (=.TRUE.), some info is displayed in screen
-        debugmode = .TRUE.
+        debugmode = .FALSE.
 
 *       Header of program
         call printHeader()
@@ -137,49 +140,33 @@
 
         print*
         print*
-        if (debugmode .EQV. .TRUE.) then
-          ! read*
-        end if
 
         call readInitTemp()
 
         print*
         print*
-        if (debugmode .EQV. .TRUE.) then
-          ! read*
-        end if
 
         call readBoundCond()
 
         print*
         print*
-        if (debugmode .EQV. .TRUE.) then
-          ! read*
-        end if
 
         call readTimeInfo()
 
         print*
         print*
-        if (debugmode .EQV. .TRUE.) then
-          ! read*
-        end if
 
         call readSolverSel()
-        if (debugmode .EQV. .TRUE.) then
-          ! read*
-        end if
 
         Tnew(:,:) = Told(:,:)
         Tmax = ToldMax
         Tmin = ToldMin
         Tavg = ToldAvg
         tsSavPos = 0
+
         call SaveResults(0)
         call defineLimits()
-        call storeTimeSteps(0.0_dp)
-
-*        call readBoundCond()
+        call storeTimeSteps(0.0D0)
 
         curTimeStep = 0
         totalIter = 0
@@ -188,8 +175,10 @@
 
         call saveTimeSteps()
 
+        print*,"=================================================================="
         print*,"Simulation has finished!"
         print*,"Total iterations: ", totalIter
+        print*,"=================================================================="
         read*
 
       end program Trab3
@@ -199,7 +188,6 @@
       subroutine readGeometry()
 *       Read geometry parameters and generate mesh through subroutine Grid2DUni
 
-        use CustomDouble
         use Geometry
 
         implicit none
@@ -209,7 +197,7 @@
 
 *       Lth: Lenght along each direction
 *          1,2 indices refer to x and y respectively
-        real(dp) :: Lth(1:2)
+        double precision :: Lth(1:2)
         common /domainsize/ Lth
 
 *       N: number of nodes in each direction
@@ -226,7 +214,7 @@
 *       Index ranges from 1 to N(1) + 1 in X direction, from 1 to N(2) + 1 in Y direction.
 *           The first two indices locate the node indexes  - I for x axis and J for y axis
 *           The third index indicates if its a distance in X direction (index = 1) or in Y direction (index = 2)
-        real(dp) :: Np(1:999,1:999,1:2), Ni(1:999,1:999,1:2)
+        double precision :: Np(1:999,1:999,1:2), NI(1:999,1:999,1:2)
         common /coordinate/ Np, Ni
 
         print*,"-------------------------------------------------------------------------------"
@@ -235,7 +223,7 @@
 
         print*,"Length in X direction (in meters):"
         if (debugmode .EQV. .TRUE.) then
-          Lth(1) = 1.0_dp
+          Lth(1) = 1.0D0
           print*,"Lth(1) = ", Lth(1), " m"
         else
           read*, Lth(1)
@@ -244,7 +232,7 @@
         print*
         print*,"Length in Y direction (in meters):"
         if (debugmode .EQV. .TRUE.) then
-          Lth(2) = 0.20_dp
+          Lth(2) = 0.20D0
           print*,"Lth(2) = ", Lth(2), " m"
         else
           read*, Lth(2)
@@ -283,23 +271,19 @@
 
       subroutine readBoundCond()
         ! Read boundary conditions for the problem
-        use CustomDouble
 
         implicit none
 
         logical :: debugmode
         common /dbgMode/ debugmode
 
-
-102     format(' ', A, I3)
-
-        real(dp) :: mouldLen, SecColLen1, SecColLen2, SecColLen3, CasSpd, Tf
+        double precision :: mouldLen, SecColLen1, SecColLen2, SecColLen3, CasSpd, Tf
         common /boundCondLen/ mouldLen, SecColLen1, SecColLen2, SecColLen3, CasSpd, Tf
 
-        real(dp) :: tMould, tS1, tS2, tS3,CasTime
+        double precision :: tMould, tS1, tS2, tS3,CasTime
         common/timingCast/ tMould, tS1, tS2, tS3, CasTime
 
-        real(dp) :: W1, W2, H3
+        double precision :: W1, W2, H3
         common /secCooling/ W1, W2, H3
 
         print*,"==================================================================================================================="
@@ -314,7 +298,7 @@
         if (debugmode .EQV. .FALSE.) then
           read*, mouldLen
         else
-          mouldLen = 0.8_dp
+          mouldLen = 0.8D0
         end if
 
         print*,""
@@ -327,7 +311,7 @@
         if (debugmode .EQV. .FALSE.) then
           read*, SecColLen1
         else
-          SecColLen1 = 0.21_dp
+          SecColLen1 = 0.21D0
         end if
 
         print*,""
@@ -340,7 +324,7 @@
         if (debugmode .EQV. .FALSE.) then
           read*, W1
         else
-          W1 = 5.56_dp
+          W1 = 5.56D0
         end if
 
         print*,""
@@ -353,7 +337,7 @@
         if (debugmode .EQV. .FALSE.) then
           read*, SecColLen2
         else
-          SecColLen2 = 1.85_dp
+          SecColLen2 = 1.85D0
         end if
 
         print*,""
@@ -366,7 +350,7 @@
         if (debugmode .EQV. .FALSE.) then
           read*, W2
         else
-          W2 = 0.83_dp
+          W2 = 0.83D0
         end if
 
         print*,""
@@ -379,7 +363,7 @@
         if (debugmode .EQV. .FALSE.) then
           read*, SecColLen3
         else
-          SecColLen3 = 13.26_dp
+          SecColLen3 = 13.26D0
         end if
 
         print*,""
@@ -392,7 +376,7 @@
         if (debugmode .EQV. .FALSE.) then
           read*, H3
         else
-          H3 = 15.0_dp
+          H3 = 15.0D0
         end if
 
         print*,""
@@ -404,9 +388,9 @@
 
         if (debugmode .EQV. .FALSE.) then
           read*, CasSpd
-          CasSpd = CasSpd / 60.0_dp
+          CasSpd = CasSpd / 60.0D0
         else
-          CasSpd = 1.0_dp / 60.0_dp
+          CasSpd = 1.0D0 / 60.0D0
         end if
 
         print*,""
@@ -419,7 +403,7 @@
         if (debugmode .EQV. .FALSE.) then
           read*, Tf
         else
-          Tf = 298.0_dp
+          Tf = 298.0D0
         end if
 
         tMould = mouldLen / CasSpd
@@ -458,7 +442,7 @@
         print*," Velocity of strand is constant and equal to v sub z           "
         print*,"                                                               "
         print*,"==============================================================="
-        print*," Author: Dickson Souza                                "
+        print*," Author: Dickson Alves de Souza                                "
         print*,"                                                               "
         print*," Based on lectures by professor Roberto Parreiras Tavares      "
         print*,"                                                               "
@@ -466,7 +450,7 @@
         print*,"      by Suhas V. Patankar (1980)                              "
         print*,"                                                               "
         print*," Federal University of Minas Gerais                            "
-        print*," November 18th, 2017                                            "
+        print*," December 10th, 2017                                            "
         print*,"==============================================================="
         print*,"                                                               "
         print*,"                                                               "
@@ -480,7 +464,6 @@
       subroutine readInitTemp()
         ! Read initial temperature
 
-        use CustomDouble
         use Solver
 
         implicit none
@@ -488,7 +471,7 @@
         logical :: debugmode
         common /dbgMode/ debugmode
 
-        real(dp) :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
+        double precision :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
         integer :: Imin,Jmin
         common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg,Imin,Jmin
 
@@ -497,17 +480,17 @@
         integer :: N(1:2)
         common /gridsize/ N
 
-        real(dp) :: Tnew(0:999,0:999), Told(0:999,0:999)
+        double precision :: Tnew(0:999,0:999), Told(0:999,0:999)
         common /tempRes/ Tnew, Told
 
-        real(dp) :: dummy
+        double precision :: dummy
 
         print*,"---------------------------------------------------------------"
         print*,"Specify the INITIAL TEMPERATURE of liquid steel (in Kelvin):"
         print*,"---------------------------------------------------------------"
 
         if (debugmode .EQV. .TRUE.) then
-          dummy = 1800.07_dp
+          dummy = 1850.0D0
           print*,"Initial liquid steel temperature = ", dummy, " K"
         else
           read*, dummy
@@ -520,8 +503,8 @@
         Told(0,:) = dummy
         Told(:,0) = dummy
 
-        Told(N(1)+1,:) = 0.0_dp
-        Told(:,N(2)+1) = 0.0_dp
+        Told(N(1)+1,:) = 0.0D0
+        Told(:,N(2)+1) = 0.0D0
 
         Imin = 0
         Jmin = 0
@@ -534,22 +517,24 @@
 
       subroutine readTimeInfo()
         ! Read information about each stage to be simulated. Up to 10 stages are allowed
-        use CustomDouble
+
         implicit none
 
         logical :: debugmode
         common /dbgMode/ debugmode
 
-        real(dp) :: simTime, curTime, num_steps, timeStep
+        double precision :: simTime, curTime, num_steps, timeStep
         integer :: timeChoice, TStepSavingPeriod
         common /time/ simTime, curTime, num_steps, timeStep, TStepSavingPeriod, timeChoice
 
-        real(dp) :: tMould, tS1, tS2, tS3, CasTime
+        double precision :: tMould, tS1, tS2, tS3, CasTime
         common/timingCast/ tMould, tS1, tS2, tS3, CasTime
 
-        real(dp) :: CumTimeM, CumTimeS1, CumTimeS2, CumTimeS3
+        double precision :: CumTimeM, CumTimeS1, CumTimeS2, CumTimeS3
 
-        real(dp) :: minTime, minTimeSteps
+        double precision :: minTime, minTimeSteps
+
+        double precision :: dummy
 
         CumTimeM = tMould
         CumTimeS1 = CumTimeM + tS1
@@ -559,7 +544,6 @@
         print*
         print*
 
-101     format(' ', A, I3, A, I3)
 201     format(' ', A, I3, A)
 301     format(' ', A, I8)
 401     format(' ', F12.0, A)
@@ -643,7 +627,7 @@
           print*,"--------------------------------------------------------------"
 
           timeStep = simTime
-          do while (timeStep .GT. (minTime / 10.0_dp))
+          do while (timeStep .GT. (minTime / 10.0D0))
 
             if (debugmode .EQV. .FALSE.) then
               read*, num_steps
@@ -657,7 +641,7 @@
             print 601, "Time step chosen is ", timeStep, " seconds."
 
             if (timeStep .GT. minTime) then
-              print 601,"Time step should be lower than ", (minTime / 10.0_dp), " seconds."
+              print 601,"Time step should be lower than ", (minTime / 10.0D0), " seconds."
               print *,"Please increase the number of time steps."
               print *,"The minimum number of time steps should be ", minTimeSteps
             end if
@@ -675,12 +659,12 @@
           print*,"--------------------------------------------------------------"
 
           timeStep = minTime
-          do while (timeStep .GT. (minTime / 10.0_dp))
+          do while (timeStep .GT. (minTime / 10.0D0))
 
             if (debugmode .EQV. .FALSE.) then
               read*, timeStep
             else
-              timeStep = 0.0001_dp
+              timeStep = 0.00025D0
             end if
 
             num_steps = ceiling(simTime / timeStep)
@@ -688,8 +672,8 @@
             print*
             print 401, num_steps," steps will be calculated."
 
-            if (timeStep .GT. (minTime / 10.0_dp)) then
-              print 601, "Time step should be lower than ", (minTime / 10.0_dp)
+            if (timeStep .GT. (minTime / 10.0D0)) then
+              print 601, "Time step should be lower than ", (minTime / 10.0D0)
               print *,"Please choose a smaller time step."
             end if
 
@@ -699,25 +683,41 @@
           end do
         end if
 
-        print*
-        print*,"--------------------------------------------------------------------"
-        print 201,"What should be the time step SAVING FREQUENCY?"
-        print*,"---------------------------------------------------------------------"
-        print*,"Instructions:"
-        print*,"Type 1 to save each time step."
-        print*,"Type 3 to save each third time step."
-        print*,"Type n to save each n-th time step."
-        print*
+        dummy = 60000
 
-        if (debugmode .EQV. .FALSE.) then
-          read*, TStepSavingPeriod
-        else
-          TStepSavingPeriod = 10000
-        end if
+        do while (dummy .GT. 50000)
 
-        print*
+          print*
+          print*,"--------------------------------------------------------------------"
+          print 201,"What should be the time step SAVING FREQUENCY?"
+          print*,"---------------------------------------------------------------------"
+          print*,"Instructions:"
+          print*,"Type 1 to save each time step."
+          print*,"Type 3 to save each third time step."
+          print*,"Type n to save each n-th time step."
+          print*
 
-        print 301,"Number of time steps to be saved: ", ceiling(num_steps/TStepSavingPeriod)
+          if (debugmode .EQV. .FALSE.) then
+            read*, TStepSavingPeriod
+          else
+            TStepSavingPeriod = 8000
+          end if
+
+          print*
+
+          print 301,"Number of time steps to be saved: ", ceiling(num_steps/TStepSavingPeriod)
+          dummy = ceiling(num_steps/TStepSavingPeriod)
+
+          if (dummy .GT. 50000) then
+            print*, "The maximum number of steps to be saved is 50 thousand."
+            print*, "Please choose a higher n for time step saving frequency."
+            print*, "Higher n means a time step will be saved each n time step."
+            print*
+            print*, "Press any key to resume and choose another time step saving frequency..."
+            read*
+          end if
+
+        end do
 
         print*
         print*
@@ -732,14 +732,13 @@
       subroutine readSolverSel()
       ! Read the choices about solver method, relaxation, use of ADI in TDMA method.
 
-        use CustomDouble
         implicit none
 
         logical :: debugmode
         common /dbgMode/ debugmode
 
         integer :: meth,relax_m, ADI
-        real(dp) :: tol, alpha
+        double precision :: tol, alpha
         common /solMethod/ tol, alpha, meth, relax_m, ADI
 
         print*,"========================================================"
@@ -751,7 +750,7 @@
         print*,"Type 3 to choose TDMA (tri-diagonal matrix algorithm)"
         print*
         if (debugmode .EQV. .TRUE.) then
-          meth = 2
+          meth = 3
           print*,"meth = ", meth
         else
           read*, meth
@@ -798,15 +797,15 @@
         print*,"---------------------------------------------"
         print*,"Range: 1.0D-1 - 1.0D-8"
         if (debugmode .EQV. .TRUE.) then
-          tol = 0.1_dp
+          tol = 0.1D0
           print*,"tol = ", tol
         else
           read*, tol
 
           if (tol .GT. 1.0D-1) then
             tol = 1.0D-1
-          elseif (tol .LT. 1.0E-8_dp) then
-            tol = 1.0E-8_dp
+          elseif (tol .LT. 1.0D-8) then
+            tol = 1.0D-8
           end if
         end if
 
@@ -821,9 +820,9 @@
 
 
         if (debugmode .EQV. .TRUE.) then
-          alpha = 1.0_dp
+          alpha = 1.0D0
 
-          if (alpha .EQ. 1.0_dp) then
+          if (alpha .EQ. 1.0D0) then
             print*,"---------------------------------------------"
             print*,"No relaxation factor will be used"
             print*,"---------------------------------------------"
@@ -841,13 +840,13 @@
             print*
             read*,alpha
 
-            if ((alpha .LT. 0.01) .OR. (alpha .GT. 2.0)) then
+            if ((alpha .LT. 0.01D0) .OR. (alpha .GT. 2.0D0)) then
               print*,"You typed a wrong value for alpha. Default value (alpha = 1.0) will be considered, instead."
-              alpha = 1.0_dp
+              alpha = 1.0D0
             end if
 
           else
-            alpha = 1.0_dp
+            alpha = 1.0D0
           end if
         end if
       end subroutine readSolverSel
@@ -858,7 +857,6 @@
       subroutine solveStage()
       ! Routine responsible to call corresponding solver and to control the time evolution
 
-        use CustomDouble
         use Solver
 
         implicit none
@@ -866,7 +864,7 @@
         integer :: iter, curTimeStep, totalIter
         common /control/ iter, curTimeStep, totalIter
 
-        real(dp) :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
+        double precision :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
         integer :: Imin,Jmin
         common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg,Imin,Jmin
 
@@ -878,19 +876,19 @@
         logical :: debugmode
         common /dbgMode/ debugmode
 
-        real(dp) :: mouldLen, SecColLen1, SecColLen2, SecColLen3, CasSpd, Tf
+        double precision :: mouldLen, SecColLen1, SecColLen2, SecColLen3, CasSpd, Tf
         common /boundCondLen/ mouldLen, SecColLen1, SecColLen2, SecColLen3, CasSpd, Tf
 
-        real(dp) :: simTime, curTime, num_steps, timeStep
+        double precision :: simTime, curTime, num_steps, timeStep
         integer :: timeChoice, TStepSavingPeriod
         common /time/ simTime, curTime, num_steps, timeStep, TStepSavingPeriod, timeChoice
 
-        real(dp) :: tMould, tS1, tS2, tS3, CasTime
+        double precision :: tMould, tS1, tS2, tS3, CasTime
         common/timingCast/ tMould, tS1, tS2, tS3, CasTime
 
-        real(dp) :: CumTimeM, CumTimeS1, CumTimeS2, CumTimeS3
+        double precision :: CumTimeM, CumTimeS1, CumTimeS2, CumTimeS3
 
-        real(dp) :: W1, W2, H3
+        double precision :: W1, W2, H3
         common /secCooling/ W1, W2, H3
 
 *       Np: array containing node positions in X and Y axis (to be calculated)
@@ -902,30 +900,24 @@
 *       Index ranges from 1 to N(1) + 1 in X direction, from 1 to N(2) + 1 in Y direction.
 *           The first two indices locate the node indexes  - I for x axis and J for y axis
 *           The third index indicates if its a distance in X direction (index = 1) or in Y direction (index = 2)
-        real(dp) :: Np(1:999,1:999,1:2), Ni(1:999,1:999,1:2)
+        double precision :: Np(1:999,1:999,1:2), NI(1:999,1:999,1:2)
         common /coordinate/ Np, Ni
 
-        real(dp) :: Tnew(0:999,0:999), Told(0:999,0:999)
+        double precision :: Tnew(0:999,0:999), Told(0:999,0:999)
         common /tempRes/ Tnew, Told
 
-*        real(dp) :: simTime, curTime, num_steps, timeStep
+*        double precision :: simTime, curTime, num_steps, timeStep
 *        integer :: timeChoice, TStepSavingPeriod
 *        common /time/ simTime, curTime, num_steps, timeStep, TStepSavingPeriod, timeChoice
 
         integer :: meth,relax_m, ADI
-        real(dp) :: tol, alpha
+        double precision :: tol, alpha
         common /solMethod/ tol, alpha, meth, relax_m, ADI
 
-        real(dp) :: Delta_t
+        double precision :: Delta_t
         logical :: timeStepChanged
 
-        real(dp) :: startTime, endTime, nextEndTime
-
-
-        character(LEN=50) :: name
-
-160     format(' ', A, I6)
-170     format(' ', A, F12.4, A)
+        double precision :: startTime, endTime, nextEndTime
 
         Nchange = 0
         Delta_t = 0
@@ -941,7 +933,7 @@
         CumTimeS2 = CumTimeS1 + tS2
         CumTimeS3 = CumTimeS2 + tS3
 
-        startTime = 0.0_dp
+        startTime = 0.0D0
         endTime = CumTimeS3
 
         curTime = startTime + Delta_t
@@ -951,87 +943,40 @@
 
         do while (curTime .LE. endTime)
 
-            print*
-            print*
-            print*
-            print*
-            print*,"--------------------------------------------------------------------------------------------------"
-            print*
-            print*
-            print 170,"CALCULATING TEMPERATURES FOR TIME = ", curTime, " seconds."
-            print*
-            print*
-            print*,"--------------------------------------------------------------------------------------------------"
+*            print*
+*            print*
+*            print*
+*            print*
+*            print*,"--------------------------------------------------------------------------------------------------"
+*            print*
+*            print*
+*            print 170,"CALCULATING TEMPERATURES FOR TIME = ", curTime, " seconds."
+*            print*
+*            print*
+*            print*,"--------------------------------------------------------------------------------------------------"
 
-*         Jacobi method
+          !Jacobi method
           if (meth .EQ. 1) then
-            name = "Jacobi Method"
             call Jacobi(Delta_t,tol,alpha)
-            if (debugmode .EQV. .TRUE.) then
-*              call print_res2D(name,Tnew,Np,curTime)
-            end if
-            if ((totalIter - tsShLog) .LT. 50) then
-                print 160,"Jacobi method has terminated - Iterations: ", iter
-                print*,"#################################################################################################"
-            end if
-            if (debugmode .EQV. .TRUE.) then
-            ! read*
-            end if
           end if
 
 *         Gauss-Seidel method
           if (meth .EQ. 2) then
-            name = "Gauss-Seidel Method"
             call GaSe2D(Delta_t, tol,alpha)
-            if (debugmode .EQV. .TRUE.) then
-*              call print_res2D(name,Tnew,Np,curTime)
-            end if
-
-            if ((totalIter - tsShLog) .LT. 50) then
-                print 160,"Gauss-Seidel method has terminated - Iterations: ", iter
-                print*,"#################################################################################################"
-            end if
-            if (debugmode .EQV. .TRUE.) then
-              ! read*
-            end if
           end if
 
 *         TDMA method
           if (meth .EQ. 3) then
             if (ADI .EQ. 1) then
-              name = "TDMA with ADI"
               call TDMA2dADI(Delta_t,tol,alpha)
-              if (debugmode .EQV. .TRUE.) then
-*                call print_res2D(name,Tnew,Np,curTime)
-              end if
-
-              if ((totalIter - tsShLog) .LT. 50) then
-                print 160,"TDMA method with ADI has terminated - Iterations: ", iter
-                print*,"#################################################################################################"
-              end if
-              if (debugmode .EQV. .TRUE.) then
-                ! read*
-              end if
             elseif (ADI .EQ. 2) then
-              name = "TDMA Simple (Non-ADI)"
               call TDMA2D(Delta_t,tol,alpha)
-              if (debugmode .EQV. .TRUE.) then
-*                call print_res2D(name,Tnew,Np,curTime)
-              end if
-
-              if ((totalIter - tsShLog) .LT. 50) then
-                print 160,"TDMA method without ADI has terminated - Iterations: ", iter
-                print*,"#################################################################################################"
-              end if
-              if (debugmode .EQV. .TRUE.) then
-                ! read*
-              end if
             end if
           end if
 
           curTimeStep = curTimeStep + 1
 
-          nextEndTime = 0.0_dp
+          nextEndTime = 0.0D0
 
           if (curTime .LT. CumTimeM) then
             nextEndTime = CumTimeM
@@ -1043,19 +988,17 @@
             nextEndTime = CumTimeS3
           end if
 
-
           if (mod(curtimeStep, TStepSavingPeriod) .EQ. 0) then
             call SaveResults(totalIter)
             call storeTimeSteps(curTime)
-          elseif ((nextEndTime - curTime) .LT. 1E-6_dp) then
+          elseif ((nextEndTime - curTime) .LT. 1D-6) then
             call SaveResults(totalIter)
             call storeTimeSteps(curTime)
           end if
 
-
           if (timeStepChanged .EQV. .FALSE.) then
 
-            if ((nextEndTime - curTime) .GT. 0.0001_dp) then
+            if ((nextEndTime - curTime) .GT. 0.0001D0) then
               if ((nextEndTime - curTime) .LT. Delta_t) then
                 Delta_t = nextEndTime - curTime
                 timeStepChanged = .TRUE.
@@ -1066,25 +1009,19 @@
           end if
 
           if ((Nchange .EQ. 0) .AND. (timeStep .GT. 0.02))then
-            if (((Tmin - Tliquidus()) .LT. 2.0_dp) .AND. (Tmin .GT. Tsolidus())) then
-              timeStep = timeStep / 100.0_dp
-              print*,timeStep
+            if (((Tmin - Tliquidus()) .LT. 2.0D0) .AND. (Tmin .GT. Tsolidus())) then
+              timeStep = timeStep / 100.0D0
               TStepSavingPeriod = TStepSavingPeriod * 100
-              print*,TStepSavingPeriod
               Delta_t = timeStep
-              print*,Delta_t
               Nchange = 1
             end if
           end if
 
-          if ((Nchange .EQ. 1) .AND. (timeStep .GT. 0.02)) then
-            if (((Tmin - Tsolidus()) .LT. 2.0_dp) .AND. (Tmin .GT. Tsolidus())) then
-              timeStep = timeStep * 100.0_dp
-              print*,timeStep
+          if ((Nchange .EQ. 1) .AND. (timeStep .LT. 0.02)) then
+            if (((Tmin - Tsolidus()) .LT. 2.0D0) .AND. (Tmin .GT. Tsolidus())) then
+              timeStep = timeStep * 100.0D0
               TStepSavingPeriod = TStepSavingPeriod / 100
-              print*,TStepSavingPeriod
               Delta_t = timeStep
-              print*,Delta_t
               Nchange = 2
             end if
           end if
@@ -1099,7 +1036,7 @@
 
 
       subroutine SaveResults(totalIter)
-        use CustomDouble
+
         use Properties
 
         implicit none
@@ -1113,14 +1050,14 @@
         ! SteelChem(4): Phosphorus
         ! SteelChem(5): Sulfur
         ! SteelChem(6): Aluminium
-        real(dp) :: SteelChem(1:6)
+        double precision :: SteelChem(1:6)
         common /steelprop/ SteelChem
 
         integer :: totalIter
 
 *       Lth: Lenght along each direction
 *          1,2 indices refer to x and y respectively
-        real(dp) :: Lth(1:2)
+        double precision :: Lth(1:2)
         common /domainsize/ Lth
 
 *       N: number of nodes in each direction
@@ -1145,40 +1082,40 @@
 *       Index ranges from 1 to N(1) + 1 in X direction, from 1 to N(2) + 1 in Y direction.
 *           The first two indices locate the node indexes  - I for x axis and J for y axis
 *           The third index indicates if its a distance in X direction (index = 1) or in Y direction (index = 2)
-        real(dp) :: Np(1:999,1:999,1:2), Ni(1:999,1:999,1:2)
+        double precision :: Np(1:999,1:999,1:2), NI(1:999,1:999,1:2)
         common /coordinate/ Np, Ni
 
-        real(dp) :: mouldLen, SecColLen1, SecColLen2, SecColLen3, CasSpd, Tf
+        double precision :: mouldLen, SecColLen1, SecColLen2, SecColLen3, CasSpd, Tf
         common /boundCondLen/ mouldLen, SecColLen1, SecColLen2, SecColLen3, CasSpd, Tf
 
-        real(dp) :: W1, W2, H3
+        double precision :: W1, W2, H3
         common /secCooling/ W1, W2, H3
 
-        real(dp) :: tMould, tS1, tS2, tS3, CasTime
+        double precision :: tMould, tS1, tS2, tS3, CasTime
         common/timingCast/ tMould, tS1, tS2, tS3, CasTime
 
-        real(dp) :: CumTimeM, CumTimeS1, CumTimeS2, CumTimeS3
+        double precision :: CumTimeM, CumTimeS1, CumTimeS2, CumTimeS3
 
-        real(dp) :: Tnew(0:999,0:999), Told(0:999,0:999)
+        double precision :: Tnew(0:999,0:999), Told(0:999,0:999)
         common /tempRes/ Tnew, Told
 
-        real(dp) :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
+        double precision :: Tmax, Tmin, Tavg,ToldMax,ToldMin,ToldAvg
         integer :: Imin,Jmin
         common /stats/ Tmax,Tmin,Tavg, ToldMax,ToldMin,ToldAvg,Imin,Jmin
 
-        real(dp) :: TmaxCh, TminCh, TavgCh
+        double precision :: TmaxCh, TminCh, TavgCh
 
-        real(dp) :: simTime, curTime, num_steps, timeStep
+        double precision :: simTime, curTime, num_steps, timeStep
         integer :: timeChoice, TStepSavingPeriod
         common /time/ simTime, curTime, num_steps, timeStep, TStepSavingPeriod, timeChoice
 
-        real(dp) :: liqFrac
+        double precision :: liqFrac
 
         integer :: meth,relax_m, ADI
-        real(dp) :: tol, alpha
+        double precision :: tol, alpha
         common /solMethod/ tol, alpha, meth, relax_m, ADI
 
-        real(dp) :: Cp, k
+        double precision :: Cp, k
 
         character(LEN = 100) :: filename
 
@@ -1197,7 +1134,6 @@
 200     format(' ', 2A5,2A10,1A12,1A19,1A17,1A17)
 300     format(' ', A, F12.4)
 400     format(' ', A, I12)
-500     format(' ', A, I3, A, I3, A)
 600     format(' ', A, F12.4, A, F12.4, A)
 800     format(' ', A, F12.4, A)
         open(10,file=filename,status='UNKNOWN')
@@ -1231,7 +1167,7 @@
         write(10,*)"by Suhas V. Patankar (1980)                                                         "
         write(10,*)"                                                                                    "
         write(10,*)"Federal University of Minas Gerais (UFMG)                                           "
-        write(10,*)"November 18th, 2017                                                                 "
+        write(10,*)"December 10th, 2017                                                                 "
         write(10,*)"===================================================================================="
         write(10,*)"                             Geometry:                                              "
         write(10,*)"                                                                                    "
@@ -1244,13 +1180,13 @@
         write(10,600)"Time at mould: ", tMould,"  - Cummulative time: ", CumTimeM," seconds"
         write(10,*)"                                                                                    "
         write(10,300)"Secondary Cooling - Zone 1 - Length (meters)", SecColLen1
-        write(10,600)"Time at mould: ", tS1," seconds - Cummulative time: ", CumTimeS1," seconds"
+        write(10,600)"Time at Zone 1: ", tS1," seconds - Cummulative time: ", CumTimeS1," seconds"
         write(10,*)"                                                                                    "
         write(10,300)"Secondary Cooling - Zone 2 - Length (meters)", SecColLen2
-        write(10,600)"Time at mould: ", tS2," seconds - Cummulative time: ", CumTimeS2," seconds"
+        write(10,600)"Time at Zone 2: ", tS2," seconds - Cummulative time: ", CumTimeS2," seconds"
         write(10,*)"                                                                                    "
         write(10,300)"Secondary Cooling - Zone 3 - Length (meters)", SecColLen3
-        write(10,600)"Time at mould: ", tS3," seconds - Cummulative time: ", CumTimeS3," seconds"
+        write(10,600)"Time at Zone 3: ", tS3," seconds - Cummulative time: ", CumTimeS3," seconds"
         write(10,*)"                                                                                    "
         write(10,300)"Casting speed: ", CasSpd
         write(10,*)"===================================================================================="
@@ -1341,12 +1277,13 @@
 
 
       subroutine storeTimeSteps(curTime)
-        use CustomDouble
+
         use Solver
 
         implicit none
 
-        real(dp) :: curTime
+
+        double precision :: curTime
 
 *       First index: 9 nodes x 9 nodes = 81 selected positions to be saved
 *       Second index: up to 50000 time steps
@@ -1358,8 +1295,12 @@
 *          5: Equivalent Specific heat
 *          6: Thermal conductivity
 *          7: Liquid fraction
-        real(dp) :: TmRs(1:81,0:50000,1:7)
-        common /transient/ TmRs
+
+*       ShThick
+*       First index: 1 for X axis, 2 for Y axis
+*       Second index: curTime
+        double precision :: TmRs(1:81,0:50000,1:7), ShThick(1:3,0:50000)
+        common /transient/ TmRs, ShThick
 
         ! SteelChem(1): Carbon
         ! SteelChem(2): Manganese
@@ -1367,7 +1308,7 @@
         ! SteelChem(4): Phosphorus
         ! SteelChem(5): Sulfur
         ! SteelChem(6): Aluminium
-        real(dp) :: SteelChem(1:6)
+        double precision :: SteelChem(1:6)
         common /steelprop/ SteelChem
 
         ! Define the formula for liquid fraction calculation: lever rule or linear variation in mushy zone
@@ -1376,7 +1317,7 @@
         integer :: mode
         common /LiqFracCalc/ mode
 
-        real(dp) :: liqFrac, ShTh
+        double precision :: ShTh, minShTh
 
 *       N: number of nodes in each direction
 *          1,2 indices refer to x and y respectively
@@ -1387,6 +1328,7 @@
 
         integer :: maxX, maxY, Xi(9), Yi(9), tsSavPos
         common /storeLimits/ maxX, maxY, Xi, Yi, tsSavPos
+
 *       Np: array containing node positions in X and Y axis (to be calculated)
 *       Index ranges from 1 to N(1) in X direction, from 1 to N(2) in Y direction.
 *         The first two indices locate the node indexes  - I for x axis and J for y axis
@@ -1396,19 +1338,44 @@
 *       Index ranges from 1 to N(1) + 1 in X direction, from 1 to N(2) + 1 in Y direction.
 *           The first two indices locate the node indexes  - I for x axis and J for y axis
 *           The third index indicates if its a distance in X direction (index = 1) or in Y direction (index = 2)
-        real(dp) :: Np(1:999,1:999,1:2), Ni(1:999,1:999,1:2)
+        double precision :: Np(1:999,1:999,1:2), NI(1:999,1:999,1:2)
         common /coordinate/ Np, Ni
 
-        real(dp) :: Tnew(0:999,0:999), Told(0:999,0:999)
+        double precision :: Tnew(0:999,0:999), Told(0:999,0:999)
         common /tempRes/ Tnew, Told
+
+        ShThick(3,tsSavPos) = curTime
+
+        minShTh = 10000.0D0
+
+        do I = 1, maxX, 1
+          ShTh = ShellThick(Xi(I),1)
+
+          if (ShTh .LT. minShTh) then
+            minShTh = ShTh
+          end if
+
+        end do
+
+        ShThick(2,tsSavPos) = minShTh
+
+        minShTh = 10000.0D0
+
+        do J = 1, maxY, 1
+          ShTh = ShellThick(Yi(J),2)
+
+          if (ShTh .LT. minShTh) then
+            minShTh = ShTh
+          end if
+
+        end do
+
+        ShThick(1,tsSavPos) = minShTh
 
         Npos = 1
 
         do I = 1, maxX, 1
           do J = 1, maxY, 1
-
-            ShTh = ShellThick(Xi(I),1)
-            ShTh = ShellThick(Yi(J),2)
 
             TmRs(Npos,tsSavPos,1) = curTime
             TmRs(Npos,tsSavPos,2) = Np(Xi(I),Yi(J),1)
@@ -1416,16 +1383,7 @@
             TmRs(Npos,tsSavPos,4) = Tnew(Xi(I),Yi(J))
             TmRs(Npos,tsSavPos,5) = Cp_Eq(Tnew(Xi(I),Yi(J)))
             TmRs(Npos,tsSavPos,6) = k_Mushy(Tnew(Xi(I),Yi(J)))
-
-            liqFrac = 0.0_dp
-
-            if (mode .EQ. 1) then
-              liqFrac = f_Liq_Lever(Tnew(I,J))
-            elseif (mode .EQ. 2) then
-              liqFrac = f_Linear(Tnew(I,J))
-            end if
-
-            TmRs(Npos,tsSavPos,7) = liqFrac
+            TmRs(Npos,tsSavPos,7) = f_Liq(Tnew(I,J))
 
             Npos = Npos + 1
           end do
@@ -1442,7 +1400,6 @@
         ! Define the nodes which will be saved for each step in a single file
         ! Up to 81 nodes can be saved to be inspected later regarding time evolution
 
-        use CustomDouble
         implicit none
 
         integer :: rpt, I, J
@@ -1453,13 +1410,13 @@
         common /gridsize/ N
 
         Xi(1) = 1
-        Xi(2) = ceiling(1.0_dp * float(N(1)) / 8.0_dp)
-        Xi(3) = ceiling(2.0_dp * float(N(1)) / 8.0_dp)
-        Xi(4) = ceiling(3.0_dp * float(N(1)) / 8.0_dp)
-        Xi(5) = ceiling(4.0_dp * float(N(1)) / 8.0_dp)
-        Xi(6) = ceiling(5.0_dp * float(N(1)) / 8.0_dp)
-        Xi(7) = ceiling(6.0_dp * float(N(1)) / 8.0_dp)
-        Xi(8) = ceiling(7.0_dp * float(N(1)) / 8.0_dp)
+        Xi(2) = ceiling(1.0D0 * float(N(1)) / 8.0D0)
+        Xi(3) = ceiling(2.0D0 * float(N(1)) / 8.0D0)
+        Xi(4) = ceiling(3.0D0 * float(N(1)) / 8.0D0)
+        Xi(5) = ceiling(4.0D0 * float(N(1)) / 8.0D0)
+        Xi(6) = ceiling(5.0D0 * float(N(1)) / 8.0D0)
+        Xi(7) = ceiling(6.0D0 * float(N(1)) / 8.0D0)
+        Xi(8) = ceiling(7.0D0 * float(N(1)) / 8.0D0)
         Xi(9) = N(1)
 
         maxX = 9
@@ -1490,13 +1447,13 @@
         end if
 
         Yi(1) = 1
-        Yi(2) = ceiling(1.0_dp * float(N(2)) / 8.0_dp)
-        Yi(3) = ceiling(2.0_dp * float(N(2)) / 8.0_dp)
-        Yi(4) = ceiling(3.0_dp * float(N(2)) / 8.0_dp)
-        Yi(5) = ceiling(4.0_dp * float(N(2)) / 8.0_dp)
-        Yi(6) = ceiling(5.0_dp * float(N(2)) / 8.0_dp)
-        Yi(7) = ceiling(6.0_dp * float(N(2)) / 8.0_dp)
-        Yi(8) = ceiling(7.0_dp * float(N(2)) / 8.0_dp)
+        Yi(2) = ceiling(1.0D0 * float(N(2)) / 8.0D0)
+        Yi(3) = ceiling(2.0D0 * float(N(2)) / 8.0D0)
+        Yi(4) = ceiling(3.0D0 * float(N(2)) / 8.0D0)
+        Yi(5) = ceiling(4.0D0 * float(N(2)) / 8.0D0)
+        Yi(6) = ceiling(5.0D0 * float(N(2)) / 8.0D0)
+        Yi(7) = ceiling(6.0D0 * float(N(2)) / 8.0D0)
+        Yi(8) = ceiling(7.0D0 * float(N(2)) / 8.0D0)
         Yi(9) = N(2)
 
         maxY = 9
@@ -1532,7 +1489,7 @@
 
 
       subroutine saveTimeSteps()
-        use CustomDouble
+
         implicit none
 
         integer :: I, J, K, Npos
@@ -1547,15 +1504,18 @@
 *          5: Specific equivalent heat
 *          6: Thermal conductivity
 *          7: Liquid fraction
-        real(dp) :: TmRs(1:81,0:50000,1:7)
-        common /transient/ TmRs
+
+*       ShThick
+*       First index: 1 for X axis, 2 for Y axis
+        double precision :: TmRs(1:81,0:50000,1:7), ShThick(1:3,0:50000)
+        common /transient/ TmRs, ShThick
 
         integer :: maxX, maxY, Xi(9), Yi(9), tsSavPos
         common /storeLimits/ maxX, maxY, Xi, Yi, tsSavPos
 
 *       Lth: Lenght along each direction
 *          1,2 indices refer to x and y respectively
-        real(dp) :: Lth(1:2)
+        double precision :: Lth(1:2)
         common /domainsize/ Lth
 
 *       N: number of nodes in each direction
@@ -1563,12 +1523,11 @@
         integer :: N(1:2)
         common /gridsize/ N
 
-        real(dp) :: simTime, curTime, num_steps, timeStep
+        double precision :: simTime, curTime, num_steps, timeStep
         integer :: timeChoice, TStepSavingPeriod
         common /time/ simTime, curTime, num_steps, timeStep, TStepSavingPeriod, timeChoice
 
         character(LEN = 100) :: filename
-
 
 120     format(' ', 6A12, 1A15)
 220     format(' ', 7F12.4)
@@ -1616,5 +1575,34 @@
 
         endfile 20
         close(20,status='KEEP')
+
+130     format(' ', 3A40)
+230     format(' ', 3F40.4)
+430     format(' ', A12,I3,A3,I3,A1,F6.2,A6,A4)
+
+
+        write(filename,430) "ShThickness_", N(1), "_X_", N(2), "_", timeStep,"_s_CNT",".DAT"
+        filename = trim(filename)
+        open(30,file=filename,status='UNKNOWN')
+
+        write(30,*)"========================================================================"
+        write(30,*)"Mesh information:"
+        write(30,320)"Nx = ", N(1)
+        write(30,320)"Ny = ", N(2)
+        write(30,*)" "
+        write(30,*)"Slab / Billet dimensions:"
+        write(30,520)"X(m) = ", Lth(1)
+        write(30,520)"Y(m) = ", Lth(2)
+
+        write(30,*)"                                                                        "
+        write(30,*)"                                                                        "
+        write(30,*)"========================================================================"
+
+        write(30,130)"Time(s)","Thickness in face perpendicular to X(m)","Thickness in face perpendicular to Y(m)"
+
+        do K = 0, tsSavPos, 1
+          write(30,230)ShThick(3,K), ShThick(1,K), ShThick(2,K)
+        end do
+
 
       end subroutine saveTimeSteps

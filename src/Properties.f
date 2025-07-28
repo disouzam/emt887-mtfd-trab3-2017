@@ -5,12 +5,10 @@
 *******************************************************
       module Properties
 
-            use CustomDouble
-
             implicit none
 
             ! Melting temperature in Kelvin
-            real(dp), parameter :: Tmelt = 1809.15_dp
+            double precision, parameter :: Tmelt = 1809.15D0
 
       contains
 
@@ -19,31 +17,17 @@
 
         implicit none
 
-        real(dp) :: k_Tn
-        real(dp) :: Tn
-
-*       Implementation for AISI 1018 steel according to
-*         KIM, Y.;FAROUK, B.; KEVERIAN, J. A mathematical model for Thermal Analysis of Thin Strip Casting of Low Carbon Steel
-*         Journal of Engineering for Industry, February 1991, v. 113
-*        k_Tn = 65.214_dp
-*        k_Tn = k_Tn + 2.715E-2_dp * Tn
-*        k_Tn = k_Tn - 1.628E-4_dp * Tn * Tn
-*        k_Tn = k_Tn + 1.39E-7_dp * Tn * Tn * Tn
-*        k_Tn = k_Tn - 3.041E-11_dp * Tn * Tn * Tn * Tn
-
+        double precision :: k_Tn
+        double precision :: Tn
 
         ! Implementation according Pereira (2004)
         ! Modelamento matem�tico do escoamento turbulento, da transfer�ncia de calor e da solidifica��o no distribuidor
         ! e na m�quina de lingotamento cont�nuo
         ! Rodrigo Ottoni da Silva Pereira - PPGEM - UFMG - 2004 - Disserta��o de mestrado
-        if (Tn .LT. 1000.15_dp) then
-
-          k_Tn = 64.1354_dp - 0.0427_dp * Tn
-
+        if (Tn .LT. 1000.15D0) then
+          k_Tn = 64.1354D0 - 0.0427D0 * Tn
         else
-
-          k_Tn = 16.9952_dp + 0.0115_dp * Tn
-
+          k_Tn = 16.9952D0 + 0.0115D0 * Tn
         end if
 
       end function k_Tn
@@ -52,10 +36,10 @@
 
         implicit none
 
-        real(dp) :: k_Mushy
-        real(dp) :: Tn
-        real(dp) :: fLiquid
-        real(dp) :: kS, C
+        double precision :: k_Mushy
+        double precision :: Tn
+        double precision :: fLiquid
+        double precision :: kS, C
 
         ! Define the formula for liquid fraction calculation: lever rule or linear variation in mushy zone
         ! Mode = 1 > Lever rule
@@ -69,32 +53,32 @@
         ! SteelChem(4): Phosphorus
         ! SteelChem(5): Sulfur
         ! SteelChem(6): Aluminium
-        real(dp) :: SteelChem(1:6)
+        double precision :: SteelChem(1:6)
         common /steelprop/ SteelChem
 
-        k_Mushy = 0.0_dp
-        C = 5.0_dp
+        k_Mushy = 0.0D0
+        C = 5.0D0
 
         fLiquid = f_Liq(Tn)
         kS = k_Tn(Tn)
 
-        k_Mushy = kS * (1.0_dp + (C - 1.0_dp) * fLiquid * fLiquid)
+        k_Mushy = kS * (1.0D0 + (C - 1.0D0) * fLiquid * fLiquid)
 
       end function k_Mushy
 
       function k_Inter(Ti,Tip1,DelMinus,DelPlus)
         implicit none
 
-        real(dp) :: k_Inter
-        real(dp) :: Ti, Tip1,DelMinus,DelPlus
-        real(dp) :: dummy,DelTotal
+        double precision :: k_Inter
+        double precision :: Ti, Tip1,DelMinus,DelPlus
+        double precision :: dummy,DelTotal
 
         DelTotal = DelMinus + DelPlus
 
-        dummy = (DelMinus / DelTotal) * (1.0_dp / k_Mushy(Ti))
-        dummy = dummy + (DelPlus / DelTotal) * (1.0_dp / k_Mushy(Tip1))
+        dummy = (DelMinus / DelTotal) * (1.0D0 / k_Mushy(Ti))
+        dummy = dummy + (DelPlus / DelTotal) * (1.0D0 / k_Mushy(Tip1))
 
-        dummy = 1.0_dp / dummy
+        dummy = 1.0D0 / dummy
 
         k_Inter = dummy
 
@@ -104,9 +88,9 @@
 
         implicit none
 
-        real(dp) :: Cp_T
-        real(dp) :: Tn
-        real(dp) :: Tliq
+        double precision :: Cp_T
+        double precision :: Tn
+        double precision :: Tliq
 
         ! SteelChem(1): Carbon
         ! SteelChem(2): Manganese
@@ -114,37 +98,8 @@
         ! SteelChem(4): Phosphorus
         ! SteelChem(5): Sulfur
         ! SteelChem(6): Aluminium
-        real(dp) :: SteelChem(1:6)
+        double precision :: SteelChem(1:6)
         common /steelprop/ SteelChem
-
-        ! Implementation for AISI 1018 steel according to
-        ! KIM, Y.;FAROUK, B.; KEVERIAN, J. A mathematical model for Thermal Analysis of Thin Strip Casting of Low Carbon Steel
-        ! Journal of Engineering for Industry, February 1991, v. 113
-
-*        if (Tn .LT. 1033.0_dp) then
-*
-*          Cp_T = 2.368_dp
-*          Cp_T = Cp_T - 1.492E-2_dp * Tn
-*          Cp_T = Cp_T + 4.107E-5_dp * Tn * Tn
-*          Cp_T = Cp_T - 4.696E-8_dp * Tn * Tn * Tn
-*          Cp_T = Cp_T + 1.953E-11_dp * Tn * Tn * Tn * Tn
-*          Cp_T = 1000.0_dp * Cp_T ! Conversion from KJ/Kg.K to J/Kg.K
-*
-*        elseif (Tn .LT. 1200.0_dp) then
-*
-*          Cp_T = 7.802_dp
-*          Cp_T = Cp_T - 5.278E-3_dp * Tn
-*          Cp_T = Cp_T - 3.676E-6_dp * Tn * Tn
-*          Cp_T = Cp_T + 1.388E-9_dp * Tn * Tn * Tn
-*          Cp_T = Cp_T + 1.031E-12_dp * Tn * Tn * Tn * Tn
-*          Cp_T = 1000.0_dp * Cp_T ! Conversion from KJ/Kg.K to J/Kg.K
-*
-*        elseif (Tn .LT. 1776.0_dp) then
-*
-*          Cp_T = 0.703_dp
-*          Cp_T = 1000.0_dp * Cp_T ! Conversion from KJ/Kg.K to J/Kg.K
-*
-*        end if
 
         ! Implementation according Pereira (2004)
         ! Modelamento matem�tico do escoamento turbulento, da transfer�ncia de calor e da solidifica��o no distribuidor
@@ -153,21 +108,21 @@
 
         Tliq = Tliquidus()
 
-        if (Tn .LE. 1020.0_dp) then
+        if (Tn .LE. 1020.0D0) then
 
-          Cp_T = 2368.0_dp
-          Cp_T = Cp_T - 14.92_dp * Tn
-          Cp_T = Cp_T + 4.107E-2_dp * Tn * Tn
-          Cp_T = Cp_T - 4.696E-5_dp * Tn * Tn * Tn
-          Cp_T = Cp_T + 1.953E-8_dp * Tn * Tn * Tn * Tn
+          Cp_T = 2368.0D0
+          Cp_T = Cp_T - 14.92D0 * Tn
+          Cp_T = Cp_T + 4.107D-2 * Tn * Tn
+          Cp_T = Cp_T - 4.696D-5 * Tn * Tn * Tn
+          Cp_T = Cp_T + 1.953D-8 * Tn * Tn * Tn * Tn
 
-        elseif (Tn .LE. 1210.0_dp) then
+        elseif (Tn .LE. 1210.0D0) then
 
-          Cp_T = 7802.0_dp
-          Cp_T = Cp_T - 5.278_dp * Tn
-          Cp_T = Cp_T - 3.676E-3_dp * Tn * Tn
-          Cp_T = Cp_T + 1.388E-6_dp * Tn * Tn * Tn
-          Cp_T = Cp_T + 1.031E-9_dp * Tn * Tn * Tn * Tn
+          Cp_T = 7802.0D0
+          Cp_T = Cp_T - 5.278D0 * Tn
+          Cp_T = Cp_T - 3.676D-3 * Tn * Tn
+          Cp_T = Cp_T + 1.388D-6 * Tn * Tn * Tn
+          Cp_T = Cp_T + 1.031D-9 * Tn * Tn * Tn * Tn
 
         elseif  (Tn .LT. Tliq) then
 
@@ -178,7 +133,6 @@
           ! Adapta��o de Suzuki et al.
           Cp_T = 720
 
-
         end if
 
       end function Cp_T
@@ -186,8 +140,8 @@
       function Cp_Eq(Tn)
         implicit none
 
-        real(dp) :: Cp_Eq
-        real(dp) :: Tn, Tliq, Tsol
+        double precision :: Cp_Eq
+        double precision :: Tn, Tliq, Tsol
 
         ! Define the formula for liquid fraction calculation: lever rule or linear variation in mushy zone
         ! Mode = 1 > Lever rule
@@ -195,7 +149,7 @@
         integer :: mode
         common /LiqFracCalc/ mode
 
-        Cp_Eq = 0.0_dp
+        Cp_Eq = 0.0D0
 
         Tliq = Tliquidus()
         Tsol = Tsolidus()
@@ -221,13 +175,12 @@
 
         implicit none
 
-        real(dp) :: h_Total
-        real(dp) :: h,Tf, Tp
-        real(dp) :: sigma, eps, p1, p2
+        double precision :: h_Total
+        double precision :: h,Tf, Tp
+        double precision :: sigma, eps, p1, p2
 
-        sigma = 5.67E-8_dp
-*        eps = emissiv(Tp)
-        eps = 0.80_dp
+        sigma = 5.67D-8
+        eps = 0.80D0
         p1 = Tf + Tp
         p2 = Tf * Tf + Tp * Tp
 
@@ -239,42 +192,42 @@
 
         implicit none
 
-        real(dp) :: emissiv
-        real(dp) :: Tp
-        real(dp) :: y1, y2, x1, x2, m
+        double precision :: emissiv
+        double precision :: Tp
+        double precision :: y1, y2, x1, x2, m
 
-        if (Tp .LT. 590.0_dp) then
-          emissiv = 0.69_dp
-        elseif (Tp .LT. 755.0_dp) then
-          y1 = 0.69_dp
-          x1 = 590.0_dp
-          y2 = 0.72_dp
-          x2 = 755.0_dp
+        if (Tp .LT. 590.0D0) then
+          emissiv = 0.69D0
+        elseif (Tp .LT. 755.0D0) then
+          y1 = 0.69D0
+          x1 = 590.0D0
+          y2 = 0.72D0
+          x2 = 755.0D0
           m = (y2 - y1) / (x2 - x1)
           emissiv = m * (Tp - x1) + y1
-        elseif (Tp .LT. 920.0_dp) then
-          y1 = 0.72_dp
-          x1 = 755.0_dp
-          y2 = 0.76_dp
-          x2 = 920.0_dp
+        elseif (Tp .LT. 920.0D0) then
+          y1 = 0.72D0
+          x1 = 755.0D0
+          y2 = 0.76D0
+          x2 = 920.0D0
           m = (y2 - y1) / (x2 - x1)
           emissiv = m * (Tp - x1) + y1
-        elseif (Tp .LT. 1090.0_dp) then
-          y1 = 0.76_dp
-          x1 = 920.0_dp
-          y2 = 0.79_dp
-          x2 = 1090.0_dp
+        elseif (Tp .LT. 1090.0D0) then
+          y1 = 0.76D0
+          x1 = 920.0D0
+          y2 = 0.79D0
+          x2 = 1090.0D0
           m = (y2 - y1) / (x2 - x1)
           emissiv = m * (Tp - x1) + y1
-        elseif (Tp .LT. 1255.0_dp) then
-          y1 = 0.79_dp
-          x1 = 1090.0_dp
-          y2 = 0.82_dp
-          x2 = 1255.0_dp
+        elseif (Tp .LT. 1255.0D0) then
+          y1 = 0.79D0
+          x1 = 1090.0D0
+          y2 = 0.82D0
+          x2 = 1255.0D0
           m = (y2 - y1) / (x2 - x1)
           emissiv = m * (Tp - x1) + y1
         else
-          emissiv = 0.82_dp
+          emissiv = 0.82D0
         end if
 
 
@@ -287,47 +240,41 @@
         logical :: debugmode
         common /dbgMode/ debugmode
 
-        real(dp) :: f_Liq_Lever
-        real(dp) :: T, Tliq, Tsol
+        double precision :: f_Liq_Lever
+        double precision :: T, Tliq, Tsol
 
-        real(dp) :: f, k
+        double precision :: f, k
 
         Tliq = Tliquidus()
         Tsol = Tsolidus()
 
         if (T .LT. Tsol) then
-          f = 0.0_dp
+          f = 0.0D0
         elseif (T .GT. Tliq) then
-          f = 1.0_dp
+          f = 1.0D0
         else
           k = (Tmelt - Tliq) / (Tmelt - Tsol)
-          f = (1.0_dp) / (1.0_dp - k)
+          f = (1.0D0) / (1.0D0 - k)
           f = f * (T - Tliq) / (T - Tmelt)
-          f = 1.0_dp - f
+          f = 1.0D0 - f
         end if
 
         f_Liq_Lever = f
-
-        if (debugmode .EQV. .TRUE.) then
-          if (f_Liq_Lever .LT. 1.0_dp) then
-*            print*,"f_Liq_Lever =", f_Liq_Lever
-          end if
-        end if
 
       end function f_Liq_Lever
 
       function df_dTLever(Tn)
         implicit none
 
-        real(dp) :: df_dTLever
-        real(dp) :: Tn, Tliq, Tsol, k, d
+        double precision :: df_dTLever
+        double precision :: Tn, Tliq, Tsol, k, d
 
         Tliq = Tliquidus()
         Tsol = Tsolidus()
         k = (Tmelt - Tliq) / (Tmelt - Tsol)
 
         d = Tmelt - Tliq
-        d = d / (1.0_dp - k)
+        d = d / (1.0D0 - k)
         d = d / ((Tmelt - Tn) * (Tmelt - Tn) )
 
         df_dTLever = d
@@ -341,39 +288,35 @@
         logical :: debugmode
         common /dbgMode/ debugmode
 
-        real(dp) :: f_Linear
-        real(dp) :: T, Tliq, Tsol
-        real(dp) :: f
+        double precision :: f_Linear
+        double precision :: T, Tliq, Tsol
+        double precision :: f
 
         Tliq = Tliquidus()
         Tsol = Tsolidus()
 
         if (T .LT. Tsol) then
-          f = 0.0_dp
+          f = 0.0D0
         elseif (T .GT. Tliq) then
-          f = 1.0_dp
+          f = 1.0D0
         else
           f = (T - Tsol) / (Tliq - Tsol)
         end if
 
         f_Linear = f
 
-        if (debugmode .EQV. .TRUE.) then
-*          print*,"f_Linear =", f_Linear
-        end if
-
       end function f_Linear
 
       function df_dTLin()
         implicit none
 
-        real(dp) :: df_dTlin
-        real(dp) :: Tliq, Tsol
+        double precision :: df_dTlin
+        double precision :: Tliq, Tsol
 
         Tliq = Tliquidus()
         Tsol = Tsolidus()
 
-        df_dTlin = (1.0_dp) / (Tliq - Tsol)
+        df_dTlin = (1.0D0) / (Tliq - Tsol)
 
       end function df_dTLin
 
@@ -383,7 +326,7 @@
         logical :: debugmode
         common /dbgMode/ debugmode
 
-        real(dp) :: Tliquidus
+        double precision :: Tliquidus
 
         ! SteelChem(1): Carbon
         ! SteelChem(2): Manganese
@@ -391,24 +334,19 @@
         ! SteelChem(4): Phosphorus
         ! SteelChem(5): Sulfur
         ! SteelChem(6): Aluminium
-        real(dp) :: SteelChem(1:6)
+        double precision :: SteelChem(1:6)
         common /steelprop/ SteelChem
 
-        real(dp) :: T
+        double precision :: T
 
-        T = 78.0_dp * SteelChem(1)
-        T = T + 4.9_dp * SteelChem(2)
-        T = T + 7.6_dp* SteelChem(3)
-        T = T + 34.4_dp * SteelChem(4)
-        T = T + 38.0_dp * SteelChem(5)
-        T = T + 3.6_dp * SteelChem(6)
+        T = 78.0D0 * SteelChem(1)
+        T = T + 4.9D0 * SteelChem(2)
+        T = T + 7.6D0* SteelChem(3)
+        T = T + 34.4D0 * SteelChem(4)
+        T = T + 38.0D0 * SteelChem(5)
+        T = T + 3.6D0 * SteelChem(6)
 
         T = Tmelt - T
-
-        if (debugmode .EQV. .TRUE.) then
-          ! print*,"Tliquidus = ", T
-        end if
-
         Tliquidus = T
 
       end function Tliquidus
@@ -419,7 +357,7 @@
         logical :: debugmode
         common /dbgMode/ debugmode
 
-        real(dp) :: Tsolidus
+        double precision :: Tsolidus
 
         ! SteelChem(1): Carbon
         ! SteelChem(2): Manganese
@@ -427,24 +365,19 @@
         ! SteelChem(4): Phosphorus
         ! SteelChem(5): Sulfur
         ! SteelChem(6): Aluminium
-        real(dp) :: SteelChem(1:6)
+        double precision :: SteelChem(1:6)
         common /steelprop/ SteelChem
 
-        real(dp) :: T
+        double precision :: T
 
-        T = 415.5_dp * SteelChem(1)
-        T = T + 6.8_dp * SteelChem(2)
-        T = T + 12.3_dp* SteelChem(3)
-        T = T + 124.5_dp * SteelChem(4)
-        T = T + 183.9_dp * SteelChem(5)
-        T = T + 4.1_dp * SteelChem(6)
+        T = 415.5D0 * SteelChem(1)
+        T = T + 6.8D0 * SteelChem(2)
+        T = T + 12.3D0* SteelChem(3)
+        T = T + 124.5D0 * SteelChem(4)
+        T = T + 183.9D0 * SteelChem(5)
+        T = T + 4.1D0 * SteelChem(6)
 
         T = Tmelt - T
-
-        if (debugmode .EQV. .TRUE.) then
-          ! print*,"Tsolidus = ", T
-        end if
-
         Tsolidus = T
 
       end function Tsolidus
@@ -455,58 +388,53 @@
         logical :: debugmode
         common /dbgMode/ debugmode
 
-        real(dp) :: Q_mould
-        real(dp) :: time
+        double precision :: Q_mould
+        double precision :: time
 
-        real(dp) :: tMould, tS1, tS2, tS3, CasTime
+        double precision :: tMould, tS1, tS2, tS3, CasTime
         common/timingCast/ tMould, tS1, tS2, tS3, CasTime
 
         if (time .LE. tMould) then
-          Q_mould = 1000.0_dp * (2680.0_dp - 220.0_dp * sqrt(time))
+          Q_mould = 1000.0D0 * (2680.0D0 - 220.0D0 * sqrt(time))
         else
-          Q_mould = 0.0_dp
+          Q_mould = 0.0D0
         end if
 
         Q_mould = - Q_mould
-
-        if (debugmode .EQV. .TRUE.) then
-*          print*,"Qmould = ", Q_mould
-          ! read*
-        end if
 
       end function Q_mould
 
       function h_SecCol(time,Temp)
         implicit none
 
-        real(dp) :: h_SecCol
-        real(dp) :: time, Temp
+        double precision :: h_SecCol
+        double precision :: time, Temp
 
-        real(dp) :: W1, W2, H3
+        double precision :: W1, W2, H3
         common /secCooling/ W1, W2, H3
 
-        real(dp) :: tMould, tS1, tS2, tS3, CasTime
+        double precision :: tMould, tS1, tS2, tS3, CasTime
         common/timingCast/ tMould, tS1, tS2, tS3, CasTime
 
-        real(dp) :: CumTimeM, CumTimeS1, CumTimeS2, CumTimeS3
+        double precision :: CumTimeM, CumTimeS1, CumTimeS2, CumTimeS3
 
         CumTimeM = tMould
         CumTimeS1 = CumTimeM + tS1
         CumTimeS2 = CumTimeS1 + tS2
         CumTimeS3 = CumTimeS2 + tS3
 
-        h_SecCol = 0.0_dp
+        h_SecCol = 0.0D0
 
         if (time .LE. CumTimeM) then
-          h_SecCol = 0.0_dp
+          h_SecCol = 0.0D0
         elseif (time .LE. CumTimeS1) then
           h_SecCol = 0.116
-          h_SecCol = h_SecCol + 708.0_dp * (W1**0.75_dp) * (Temp**(-1.2_dp))
-          h_SecCol = h_SecCol * 1000.0_dp
+          h_SecCol = h_SecCol + 708.0D0 * (W1**0.75D0) * (Temp**(-1.2D0))
+          h_SecCol = h_SecCol * 1000.0D0
         elseif (time .LE. CumTimeS2) then
           h_SecCol = 0.116
-          h_SecCol = h_SecCol + 708.0_dp * (W2**0.75_dp) * (Temp**(-1.2_dp))
-          h_SecCol = h_SecCol * 1000.0_dp
+          h_SecCol = h_SecCol + 708.0D0 * (W2**0.75D0) * (Temp**(-1.2D0))
+          h_SecCol = h_SecCol * 1000.0D0
         elseif (time .LE. CumTimeS3) then
           h_SecCol = H3
         end if
@@ -515,10 +443,9 @@
 
       function LatentHeat()
         implicit none
+        double precision :: LatentHeat
 
-        real(dp) :: LatentHeat
-
-        LatentHeat = 283000.0_dp
+        LatentHeat = 283000.0D0
 
       end function LatentHeat
 
@@ -526,8 +453,8 @@
       function f_Liq(Tn)
         implicit none
 
-        real(dp) :: f_Liq
-        real(dp) :: Tn
+        double precision :: f_Liq
+        double precision :: Tn
 
         ! Define the formula for liquid fraction calculation: lever rule or linear variation in mushy zone
         ! Mode = 1 > Lever rule
@@ -535,7 +462,7 @@
         integer :: mode
         common /LiqFracCalc/ mode
 
-        f_Liq = 0.0_dp
+        f_Liq = 0.0D0
 
         if (mode .EQ. 1) then
           f_Liq = f_Liq_Lever(Tn)
